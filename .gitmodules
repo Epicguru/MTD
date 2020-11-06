@@ -4,3 +4,6 @@
 [submodule "Nez"]
 	path = Nez
 	url = https://github.com/Epicguru/Nez
+[submodule "JDef2"]
+	path = JDef2
+	url = https://github.com/Epicguru/JDef2
