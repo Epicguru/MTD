@@ -5,12 +5,14 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <MonoGamePlatform>DesktopGL</MonoGamePlatform>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <RunPostBuildEvent>Always</RunPostBuildEvent>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\FNA\FNA.Core.csproj" />
     <ProjectReference Include="..\Nez\Nez.ImGui\Nez.FNA.Standard.ImGui.csproj" />
     <ProjectReference Include="..\Nez\Nez.Portable\Nez.FNA.Standard.csproj" />
+    <ProjectReference Include="..\Nez\Nez.SpriteAtlasPacker\SpriteAtlasPacker\SpriteAtlasPacker.Standard.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -32,8 +34,13 @@
     <Folder Include="Content\" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.0.1641" />
-  </ItemGroup>
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+    <Exec Command="XCOPY $(ProjectDir)Content\ $(TargetDir)Content\ /S /Y /V" />
+  </Target>
+
+  <!-- Disable checking for file changes before build. This ensures that pre-build event is always run. -->
+  <PropertyGroup>
+    <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
+  </PropertyGroup>
 
 </Project>

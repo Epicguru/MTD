@@ -5,6 +5,7 @@ using Nez.Sprites;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using ImGuiNET;
 using Nez.Textures;
 using Microsoft.Xna.Framework.Graphics;
@@ -18,7 +19,7 @@ namespace FnaTest
 {
     class Program
     {
-        static void Main(string[] args)
+        static void Main(string[] _)
         {
             Console.WriteLine("Hello World!");
             using Game g = new MyGame();
@@ -56,6 +57,50 @@ namespace FnaTest
             DebugConsole.RenderScale = 2;
 
             Scene = new MyScene();
+        }
+
+        private static Point lastSize;
+        [Command("toggle-fullscreen", "Changes between fullscreen mode and windowed mode.")]
+        public static void ToggleFullscreen()
+        {
+            if (lastSize == Point.Zero)
+                lastSize = new Point(Screen.MonitorWidth / 2, Screen.MonitorHeight / 2);
+
+            if (Screen.IsFullscreen)
+            {
+                Screen.IsFullscreen = false;
+                Screen.SetSize(lastSize.X, lastSize.Y);
+            }
+            else
+            {
+                lastSize = new Point(Screen.Width, Screen.Height);
+                Screen.IsFullscreen = true;
+                Screen.SetSize(Screen.MonitorWidth, Screen.MonitorHeight);
+            }
+        }
+
+        [Command("toggle-borderless", "Toggles the window's borderless state.")]
+        public static void ToggleBorderless()
+        {
+            Instance.Window.IsBorderlessEXT = !Instance.Window.IsBorderlessEXT;
+        }
+
+        [Command("clear-entities", "Destroys all entities, apart from the scene cameras.")]
+        private static void ClearEntities()
+        {
+            var scene = Scene;
+            if (scene == null)
+                return;
+
+            var list = scene.Entities.RootEntities();
+            foreach (var e in list)
+            {
+                var cam = e.GetComponentInChildren<Camera>();
+                if (cam == null)
+                    e.Destroy();
+            }
+            ListPool<Entity>.Free(list);
+            DebugConsole.Instance.Log("Cleared entities.");
         }
     }
 
@@ -129,6 +174,8 @@ namespace FnaTest
             base.Initialize();
 
             SamplerState = SamplerState.PointClamp;
+            AddRenderer(new RenderLayerExcludeRenderer(0, 999)); // For UI.
+            AddRenderer(new ScreenSpaceRenderer(100, 999)); // For everything else.
         }
 
         public override void OnStart()
@@ -137,11 +184,20 @@ namespace FnaTest
             var manager = Core.GetGlobalManager<ImGuiManager>();
             manager.RegisterDrawCommand(DrawSomeUI);
 
+            bool worked = RuntimePacker.Pack("./Content/", "./Content/MainAtlas", (step) =>
+            {
+                Debug.Log(step);
+            });
+            if (!worked)
+                throw new Exception("Atlas packing failed.");
+
             SetupMenu();
             UIScaleController.RegisterCanvas(ui);
 
-            //CreateEntity("Ball").AddComponent(new SpriteRenderer(Content.Load<Texture2D>("Face")));
-            CreateEntity("BG").AddComponent(new SpriteRenderer(Content.Load<Texture2D>("BG"))).RenderLayer = 100;
+            var atlas = Content.LoadSpriteAtlas("Content/MainAtlas.atlas");
+
+            CreateEntity("BG").AddComponent(new SpriteRenderer(atlas.GetSprite("BG"))).RenderLayer = 1;
+            CreateEntity("Ball").AddComponent(new SpriteRenderer(atlas.GetSprite("Face")));
         }
 
         public override void Unload()
@@ -153,11 +209,12 @@ namespace FnaTest
 
         private void SetupMenu()
         {
-            ui = FindEntity("camera").AddComponent(new UICanvas());
+            ui = CreateEntity("UI").AddComponent(new UICanvas());
+            ui.SetRenderLayer(999);
             ui.IsFullScreen = true;
 
             var skin = Skin.CreateDefaultSkin();
-            var font = Content.LoadBitmapFont(@"Content\Fonts\MyFont.fnt");
+            var font = Content.LoadBitmapFont("Content/Fonts/MyFont.fnt");
             skin.Get<LabelStyle>().Font = font;
             skin.Get<TextButtonStyle>().Font = font;
             skin.Get<WindowStyle>().TitleFont = font;
@@ -205,15 +262,13 @@ namespace FnaTest
             ui.Stage.AddElement(newTable);
         }
 
-        public override void Update()
-        {
-            base.Update();
-        }
-
         private void DrawSomeUI()
         {
             var size = base.SceneRenderTargetSize;
             ImGui.Begin("My custom window");
+            ImGui.Text($"Current scene: {Core.Scene?.GetType().Name ?? "null"}");
+            ImGui.Text($"Current renderer count: {Core.Scene?.RendererCount ?? 0}");
+            ImGui.Text($"Current post renderer count: {Core.Scene?.PostRendererCount ?? 0}");
             ImGui.Text($"Display: {Screen.MonitorWidth}x{Screen.MonitorHeight}");
             ImGui.Text($"Screen: {Screen.Width}x{Screen.Height}");
             ImGui.Text($"RTS: {size.X}x{size.Y}");
