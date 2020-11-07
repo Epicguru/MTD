@@ -1,21 +1,20 @@
-﻿using Microsoft.Xna.Framework;
-using Nez;
-using Nez.ImGuiTools;
-using Nez.Sprites;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading;
 using ImGuiNET;
-using Nez.Textures;
+using JDef;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
+using MTD.Entities;
+using Nez;
 using Nez.BitmapFonts;
-using Nez.UI;
 using Nez.Console;
-using Nez.Analysis;
+using Nez.ImGuiTools;
+using Nez.Sprites;
+using Nez.Textures;
+using Nez.UI;
 
-namespace FnaTest
+namespace MTD
 {
     class Program
     {
@@ -168,6 +167,8 @@ namespace FnaTest
     class MyScene : Scene
     {
         private UICanvas ui;
+        private SpriteAtlas atlas;
+        private EntityDef def;
 
         public override void Initialize()
         {
@@ -176,13 +177,6 @@ namespace FnaTest
             SamplerState = SamplerState.PointClamp;
             AddRenderer(new RenderLayerExcludeRenderer(0, 999)); // For UI.
             AddRenderer(new ScreenSpaceRenderer(100, 999)); // For everything else.
-        }
-
-        public override void OnStart()
-        {
-            base.OnStart();
-            var manager = Core.GetGlobalManager<ImGuiManager>();
-            manager.RegisterDrawCommand(DrawSomeUI);
 
             bool worked = RuntimePacker.Pack("./Content/", "./Content/MainAtlas", (step) =>
             {
@@ -191,13 +185,39 @@ namespace FnaTest
             if (!worked)
                 throw new Exception("Atlas packing failed.");
 
+            atlas = Content.LoadSpriteAtlas("Content/MainAtlas.atlas");
+
+            var db = new DefDatabase();
+            db.AddCustomResolver(typeof(Sprite), (args) =>
+            {
+                string path = args.XmlNode.InnerText;
+                var sprite = atlas.GetSprite(path);
+                if (sprite == null)
+                    Debug.Error("Failed to find sprite for path '{0}'", path);
+                return sprite;
+            });
+
+            db.LoadFromDir("./Content/Defs/");
+            db.Process();
+
+            def = db.GetNamed<EntityDef>("TestEntityDef");
+        }
+
+        public override void OnStart()
+        {
+            base.OnStart();
+            var manager = Core.GetGlobalManager<ImGuiManager>();
+            manager.RegisterDrawCommand(DrawSomeUI);
+
             SetupMenu();
             UIScaleController.RegisterCanvas(ui);
 
-            var atlas = Content.LoadSpriteAtlas("Content/MainAtlas.atlas");
+            //CreateEntity("BG").AddComponent(new SpriteRenderer(atlas.GetSprite("BG"))).RenderLayer = 1;
+            //CreateEntity("Ball").AddComponent(new SpriteRenderer(atlas.GetSprite("Face"))).AddComponent(new BoxCollider(32, 32));
 
-            CreateEntity("BG").AddComponent(new SpriteRenderer(atlas.GetSprite("BG"))).RenderLayer = 1;
-            CreateEntity("Ball").AddComponent(new SpriteRenderer(atlas.GetSprite("Face")));
+            CreateEntity("Map").AddComponent(new TileLayer(1000, 1000));
+
+            def.Create(this);
         }
 
         public override void Unload()
@@ -262,6 +282,9 @@ namespace FnaTest
             ui.Stage.AddElement(newTable);
         }
 
+        private float[] renderedTileCount = new float[200];
+        private int _plotIndex;
+
         private void DrawSomeUI()
         {
             var size = base.SceneRenderTargetSize;
@@ -273,6 +296,7 @@ namespace FnaTest
             ImGui.Text($"Screen: {Screen.Width}x{Screen.Height}");
             ImGui.Text($"RTS: {size.X}x{size.Y}");
             ImGui.Text($"UI: {ui?.Width}x{ui?.Height}");
+            ImGui.Text($"World cam bounds: {Camera?.Bounds}");
             if (ImGui.Button("Go fullscreen"))
             {
                 if (!Screen.IsFullscreen)
@@ -296,6 +320,16 @@ namespace FnaTest
                     tex.SaveAsPng(fs, tex.Width, tex.Height);
                 });
             }
+
+            ImGui.Spacing();
+
+            float f = FindComponentOfType<TileLayer>()?.RenderedTileCount ?? 0;
+            renderedTileCount[_plotIndex] = f;
+            _plotIndex = (_plotIndex + 1) % renderedTileCount.Length;
+
+            ImGui.PlotLines("Rendered tiles", ref renderedTileCount[0], renderedTileCount.Length, _plotIndex,
+                $"Tiles: {renderedTileCount[_plotIndex]:F0}", 0, 100000, new Vector2(ImGui.GetContentRegionAvail().X, 150).ToNumerics());
+
             ImGui.End();
         }
     }

@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\FNA\FNA.Core.csproj" />
+    <ProjectReference Include="..\JDef2\JDef\JDef.FNA.csproj" />
     <ProjectReference Include="..\Nez\Nez.ImGui\Nez.FNA.Standard.ImGui.csproj" />
     <ProjectReference Include="..\Nez\Nez.Portable\Nez.FNA.Standard.csproj" />
     <ProjectReference Include="..\Nez\Nez.SpriteAtlasPacker\SpriteAtlasPacker\SpriteAtlasPacker.Standard.csproj" />
@@ -30,10 +31,6 @@
     </None>
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Content\" />
-  </ItemGroup>
-
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
     <Exec Command="XCOPY $(ProjectDir)Content\ $(TargetDir)Content\ /S /Y /V" />
   </Target>
@@ -41,6 +38,7 @@
   <!-- Disable checking for file changes before build. This ensures that pre-build event is always run. -->
   <PropertyGroup>
     <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
+    <RootNamespace>MTD</RootNamespace>
   </PropertyGroup>
 
 </Project>

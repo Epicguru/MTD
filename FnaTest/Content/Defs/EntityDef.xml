@@ -1,0 +1,9 @@
+﻿<Defs>
+
+  <EntityDef abstract="true" class="MTD.Entities.EntityDef">
+
+    <Scale>(1, 1)</Scale>
+
+  </EntityDef>
+
+</Defs>

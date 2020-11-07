@@ -1,6 +1,6 @@
 ﻿using Nez;
 
-namespace FnaTest
+namespace MTD
 {
     public static class NezExtensions
     {

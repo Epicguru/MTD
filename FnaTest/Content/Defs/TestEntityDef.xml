@@ -1,0 +1,22 @@
+﻿<Defs>
+
+  <TestEntityDef parent="EntityDef">
+
+    <Name>My Entity from Def</Name>
+
+    <Components>
+
+      <li class="MTD.Entities.SpriteRendererDef">
+        <Sprite>Tiles/Table</Sprite>
+        <Color>(0, 1, 0, 1)</Color>
+      </li>
+
+      <li class="MTD.Entities.HealthDef">
+        <MaxHealth>6942</MaxHealth>
+      </li>
+
+    </Components>
+
+  </TestEntityDef>
+
+</Defs>

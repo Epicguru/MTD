@@ -1,9 +1,9 @@
-﻿using Nez;
-using Nez.Tools.Atlases;
-using System;
+﻿using System;
 using System.IO;
+using Nez;
+using Nez.Tools.Atlases;
 
-namespace FnaTest
+namespace MTD
 {
     public static class RuntimePacker
     {
