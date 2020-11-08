@@ -1,7 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Nez;
 using Nez.Sprites;
-using Nez.UI;
 using System;
 using System.Threading;
 
@@ -128,6 +127,12 @@ namespace MTD.Scenes
             try
             {
                 Load?.Invoke();
+
+                // Wait until transition in is done.
+                while (Core.IsInTransition)
+                {
+                    Thread.Sleep(10);
+                }
 
                 Main.PostToMainThread(LoadDone);
             }

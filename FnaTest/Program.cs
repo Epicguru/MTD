@@ -3,6 +3,7 @@ using JDef;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using MTD.Components;
 using MTD.Entities;
 using MTD.Scenes;
 using MTD.World;
@@ -314,8 +315,8 @@ namespace MTD
             base.Initialize();
 
             SamplerState = SamplerState.PointClamp;
-            AddRenderer(new RenderLayerExcludeRenderer(0, 999)); // For UI.
-            AddRenderer(new ScreenSpaceRenderer(100, 999)); // For everything else.
+            AddRenderer(new RenderLayerExcludeRenderer(0, 999)); // For world objects.
+            AddRenderer(new ScreenSpaceRenderer(100, 999)); // For UI.
         }
 
         public override void OnStart()
@@ -326,12 +327,16 @@ namespace MTD
             var manager = Core.GetGlobalManager<ImGuiManager>();
             manager.RegisterDrawCommand(DrawSomeUI);
 
-            // Create map.
-            CreateEntity("Map").AddComponent(new TileLayer(1000, 1000));
-
             // Create entity from def.
             var def = Main.Defs.GetNamed<EntityDef>("TestEntityDef");
-            def.Create(this).Name = "FatOne";
+            var e = def.Create(this);
+
+            e.AddComponent(new BoxDrawer());
+            e.Name = "FatOne";
+
+            //CreateEntity("Another").AddComponent(new SpriteRenderer(Content.Load<Texture2D>("Tiles/Dirt"))).Entity.Position = new Vector2(450, 500);
+
+            //CreateEntity("HAHA").AddComponent(new BoxDrawer()).Entity.Position = new Vector2(450, 550);
 
             // Create UI.
             SetupMenu();
@@ -347,11 +352,6 @@ namespace MTD
 
         public override void Update()
         {
-            base.Update();
-
-            if (Camera.IsNullOrDestroyed())
-                return;
-
             Vector2 vel = new Vector2();
             if (Input.IsKeyDown(Keys.A))
                 vel.X -= 1;
@@ -370,7 +370,10 @@ namespace MTD
             var mp = Input.MousePosition;
             mp = Camera.ScreenToWorldPoint(mp);
 
-            FindEntity("FatOne").Position = mp;
+            var e = FindEntity("FatOne");
+            e.Position = mp;
+
+            base.Update();
         }
 
         private void SetupMenu()
@@ -401,9 +404,10 @@ namespace MTD
             exitButton.OnClicked += b =>
             {
                 //Core.Exit();
-                LoadingScene.LoadAndChangeScene(new AnotherScene(), () =>
+                var gs = new GameScene();
+                LoadingScene.LoadAndChangeScene(gs, () =>
                 {
-                    Thread.Sleep(60000);
+                    gs.Layer = GameScene.GenerateLayer(1000, 100);
                 });
             };
 

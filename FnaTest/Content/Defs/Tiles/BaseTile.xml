@@ -3,5 +3,7 @@
 
   <Sprite>Tiles/MissingTexture</Sprite>
   <Class>MTD.World.Tile</Class>
+  <Color>(1, 1, 1, 1)</Color>
+  <TickInterval>-1</TickInterval>
 
 </BaseTile>
