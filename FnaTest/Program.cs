@@ -1,11 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using ImGuiNET;
+﻿using ImGuiNET;
 using JDef;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using MTD.Entities;
+using MTD.Scenes;
+using MTD.World;
 using Nez;
 using Nez.BitmapFonts;
 using Nez.Console;
@@ -13,27 +13,127 @@ using Nez.ImGuiTools;
 using Nez.Sprites;
 using Nez.Textures;
 using Nez.UI;
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Threading;
+using Debug = Nez.Debug;
 
 namespace MTD
 {
-    class Program
+    internal static class Program
     {
-        static void Main(string[] _)
+        private static void Main(string[] _)
         {
             Console.WriteLine("Hello World!");
-            using Game g = new MyGame();
+            using Game g = new Main();
             g.Run();
         }
     }
 
-    class MyGame : Core
+    public class Main : Core
     {
+        public static DefDatabase Defs { get; private set; }
+        public static SpriteAtlas Atlas { get; private set; }
+
+        public static BitmapFont Font48 { get; private set; }
+        public static BitmapFont FontTitle { get; private set; }
+
+        private static ThreadController _threadController;
+
+        public static void PostToMainThread(Action a)
+        {
+            _threadController?.Post(a);
+        }
+
         protected override void Initialize()
         {
             base.Initialize();
-
             Window.AllowUserResizing = true;
+            CreateImGuiManager();
+            DebugConsole.RenderScale = 2;
 
+            RegisterGlobalManager(new UIScaleController());
+            RegisterGlobalManager(_threadController = new ThreadController());
+
+            Scene = CreateLoadCoreAssetsScene();
+        }
+
+        private LoadingScene CreateLoadCoreAssetsScene()
+        {
+            var ls = new LoadingScene();
+            ls.Load = () =>
+            {
+                var sw = new Stopwatch();
+                sw.Start();
+
+                ls.SetMessage("Loading core content...");
+                LoadEssentialContent();
+                PackMainAtlas(ls);
+                ls.SetMessage("Loading main atlas...");
+                Atlas = Content.LoadSpriteAtlas("Content/MainAtlas.atlas", true);
+
+                sw.Stop();
+                Debug.Log("Took {0} ms to do core asset load", sw.ElapsedMilliseconds);
+
+            };
+            ls.LoadDone = () =>
+            {
+                Scene = CreateLoadGeneralAssetsScene();
+            };
+            ls.LoadError = (s, e) =>
+            {
+                Debug.Error("Due to core asset loading exception, game will close.");
+                Exit();
+            };
+            return ls;
+        }
+
+        private LoadingScene CreateLoadGeneralAssetsScene()
+        {
+            var ls = new LoadingScene();
+            ls.Load = () =>
+            {
+                var sw = new Stopwatch();
+                sw.Start();
+
+                #region Load Defs
+                // Load defs!
+                Defs = new DefDatabase();
+                Defs.AddCustomResolver(typeof(Sprite), (args) =>
+                {
+                    string path = args.XmlNode.InnerText;
+                    var sprite = Main.Atlas.GetSprite(path);
+                    if (sprite == null)
+                        Debug.Error("Failed to find sprite for path '{0}'", path);
+                    return sprite;
+                });
+                ls.SetMessage("Loading defs...");
+                Defs.LoadFromDir("Content/Defs/");
+                ls.SetMessage("Processing defs...");
+                Defs.Process();
+                #endregion
+
+                sw.Stop();
+                Debug.Log("Took {0} ms to do general asset load", sw.ElapsedMilliseconds);
+            };
+            ls.LoadDone = () =>
+            {
+                StartSceneTransition(new FadeTransition(() => new MyScene()) { FadeOutDuration = 0.4f, FadeInDuration = 0.4f });
+            };
+            ls.LoadError = (s, e) =>
+            {
+                Debug.Error("Due to core (general) asset loading exception, game will close.");
+                Exit();
+            };
+
+            return ls;
+        }
+
+        private void CreateImGuiManager()
+        {
             var manager = new ImGuiManager();
             RegisterGlobalManager(manager);
             manager.ShowSeperateGameWindow = false;
@@ -42,7 +142,7 @@ namespace MTD
                 NezImGuiThemes.PhotoshopDark();
                 var style = ImGui.GetStyle();
                 style.FramePadding.Y = 4;
-                style.Colors[(int) ImGuiCol.Border] = new System.Numerics.Vector4(0f, 237 / 255f, 1f, 130 / 255f);
+                style.Colors[(int)ImGuiCol.Border] = new System.Numerics.Vector4(0f, 237 / 255f, 1f, 130 / 255f);
                 style.WindowTitleAlign.X = 0.5f;
             }
             catch (Exception e)
@@ -50,17 +150,27 @@ namespace MTD
                 Debug.Error(e.ToString());
             }
             manager.SetEnabled(false);
+        }
 
-            RegisterGlobalManager(new UIScaleController());
+        private void PackMainAtlas(LoadingScene ls)
+        {
+            bool worked = RuntimePacker.PackAll("Content/", "Content/MainAtlas", (step) =>
+            {
+                ls.SetMessage($"Packing sprites: {step}");
+            });
+            if (!worked)
+                throw new Exception("Atlas packing failed.");
+        }
 
-            DebugConsole.RenderScale = 2;
-
-            Scene = new MyScene();
+        private void LoadEssentialContent()
+        {
+            Font48 = Content.LoadBitmapFont("Content/Fonts/MyFont.fnt");
+            FontTitle = Content.LoadBitmapFont("Content/Fonts/Title72.fnt");
         }
 
         private static Point lastSize;
         [Command("toggle-fullscreen", "Changes between fullscreen mode and windowed mode.")]
-        public static void ToggleFullscreen()
+        private static void ToggleFullscreen()
         {
             if (lastSize == Point.Zero)
                 lastSize = new Point(Screen.MonitorWidth / 2, Screen.MonitorHeight / 2);
@@ -79,7 +189,7 @@ namespace MTD
         }
 
         [Command("toggle-borderless", "Toggles the window's borderless state.")]
-        public static void ToggleBorderless()
+        private static void ToggleBorderless()
         {
             Instance.Window.IsBorderlessEXT = !Instance.Window.IsBorderlessEXT;
         }
@@ -103,7 +213,7 @@ namespace MTD
         }
     }
 
-    class UIScaleController : GlobalManager
+    public class UIScaleController : GlobalManager
     {
         public static float Scale { get; set; } = 1;
 
@@ -164,11 +274,40 @@ namespace MTD
         }
     }
 
+    public class ThreadController : GlobalManager
+    {
+        public int QueuedItems
+        {
+            get
+            {
+                return todo.Count;
+            }
+        }
+
+        private readonly ConcurrentQueue<Action> todo = new ConcurrentQueue<Action>();
+
+        public void Post(Action a)
+        {
+            if (a == null)
+                return;
+
+            todo.Enqueue(a);
+        }
+
+        public override void Update()
+        {
+            base.Update();
+
+            while (todo.TryDequeue(out var toRun))
+            {
+                toRun?.Invoke();
+            }
+        }
+    }
+
     class MyScene : Scene
     {
         private UICanvas ui;
-        private SpriteAtlas atlas;
-        private EntityDef def;
 
         public override void Initialize()
         {
@@ -177,47 +316,26 @@ namespace MTD
             SamplerState = SamplerState.PointClamp;
             AddRenderer(new RenderLayerExcludeRenderer(0, 999)); // For UI.
             AddRenderer(new ScreenSpaceRenderer(100, 999)); // For everything else.
-
-            bool worked = RuntimePacker.Pack("./Content/", "./Content/MainAtlas", (step) =>
-            {
-                Debug.Log(step);
-            });
-            if (!worked)
-                throw new Exception("Atlas packing failed.");
-
-            atlas = Content.LoadSpriteAtlas("Content/MainAtlas.atlas");
-
-            var db = new DefDatabase();
-            db.AddCustomResolver(typeof(Sprite), (args) =>
-            {
-                string path = args.XmlNode.InnerText;
-                var sprite = atlas.GetSprite(path);
-                if (sprite == null)
-                    Debug.Error("Failed to find sprite for path '{0}'", path);
-                return sprite;
-            });
-
-            db.LoadFromDir("./Content/Defs/");
-            db.Process();
-
-            def = db.GetNamed<EntityDef>("TestEntityDef");
         }
 
         public override void OnStart()
         {
             base.OnStart();
+
+            // Register ImGUI drawer..
             var manager = Core.GetGlobalManager<ImGuiManager>();
             manager.RegisterDrawCommand(DrawSomeUI);
 
-            SetupMenu();
-            UIScaleController.RegisterCanvas(ui);
-
-            //CreateEntity("BG").AddComponent(new SpriteRenderer(atlas.GetSprite("BG"))).RenderLayer = 1;
-            //CreateEntity("Ball").AddComponent(new SpriteRenderer(atlas.GetSprite("Face"))).AddComponent(new BoxCollider(32, 32));
-
+            // Create map.
             CreateEntity("Map").AddComponent(new TileLayer(1000, 1000));
 
-            def.Create(this);
+            // Create entity from def.
+            var def = Main.Defs.GetNamed<EntityDef>("TestEntityDef");
+            def.Create(this).Name = "FatOne";
+
+            // Create UI.
+            SetupMenu();
+            UIScaleController.RegisterCanvas(ui);
         }
 
         public override void Unload()
@@ -227,6 +345,34 @@ namespace MTD
             ui = null;
         }
 
+        public override void Update()
+        {
+            base.Update();
+
+            if (Camera.IsNullOrDestroyed())
+                return;
+
+            Vector2 vel = new Vector2();
+            if (Input.IsKeyDown(Keys.A))
+                vel.X -= 1;
+            if (Input.IsKeyDown(Keys.D))
+                vel.X += 1;
+            if (Input.IsKeyDown(Keys.W))
+                vel.Y -= 1;
+            if (Input.IsKeyDown(Keys.S))
+                vel.Y += 1;
+
+            vel.Normalize();
+            vel *= Time.UnscaledDeltaTime * Tile.SIZE * 10f;
+
+            Camera.Position += vel;
+
+            var mp = Input.MousePosition;
+            mp = Camera.ScreenToWorldPoint(mp);
+
+            FindEntity("FatOne").Position = mp;
+        }
+
         private void SetupMenu()
         {
             ui = CreateEntity("UI").AddComponent(new UICanvas());
@@ -234,18 +380,11 @@ namespace MTD
             ui.IsFullScreen = true;
 
             var skin = Skin.CreateDefaultSkin();
-            var font = Content.LoadBitmapFont("Content/Fonts/MyFont.fnt");
+            var font = Main.Font48;
             skin.Get<LabelStyle>().Font = font;
             skin.Get<TextButtonStyle>().Font = font;
             skin.Get<WindowStyle>().TitleFont = font;
             var table = ui.Stage.AddElement(new Table());
-
-            //var e = CreateEntity("Test");
-            //e.Position = Screen.Center + new Vector2(300, 0);
-            //e.AddComponent(new SpriteRenderer(new Sprite(font.Textures[0])));
-
-            //CreateEntity("Text").AddComponent(new TextComponent(font, "Some Text", Vector2.Zero, Color.White));
-            //CreateEntity("Custom Char Renderer").AddComponent(new CustomTextRenderer(font) { Char = 'T' });
 
             table.SetFillParent(true).Center();
 
@@ -258,10 +397,14 @@ namespace MTD
 
             table.Row().SetPadTop(15f);
 
-            var exitButton = table.Add(new TextButton("Exit", skin)).SetFillX().SetMinHeight(30).GetElement<TextButton>();
+            var exitButton = table.Add(new TextButton("Transition", skin)).SetFillX().SetMinHeight(30).GetElement<TextButton>();
             exitButton.OnClicked += b =>
             {
-                Core.Exit();
+                //Core.Exit();
+                LoadingScene.LoadAndChangeScene(new AnotherScene(), () =>
+                {
+                    Thread.Sleep(60000);
+                });
             };
 
             table.Row().SetPadTop(15);
@@ -328,7 +471,7 @@ namespace MTD
             _plotIndex = (_plotIndex + 1) % renderedTileCount.Length;
 
             ImGui.PlotLines("Rendered tiles", ref renderedTileCount[0], renderedTileCount.Length, _plotIndex,
-                $"Tiles: {renderedTileCount[_plotIndex]:F0}", 0, 100000, new Vector2(ImGui.GetContentRegionAvail().X, 150).ToNumerics());
+                $"Tiles: {f:F0}", 0, 100000, new Vector2(ImGui.GetContentRegionAvail().X, 150).ToNumerics());
 
             ImGui.End();
         }

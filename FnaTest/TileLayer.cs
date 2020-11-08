@@ -25,11 +25,11 @@ namespace MTD
             var camBounds = camera.Bounds;
             int sx = Mathf.Clamp(Mathf.FloorToInt(camBounds.X / Tile.SIZE), 0, WidthInTiles);
             int sy = Mathf.Clamp(Mathf.FloorToInt(camBounds.Y / Tile.SIZE), 0, HeightInTiles);
-            int ex = Mathf.Clamp(Mathf.CeilToInt(camBounds.Right / Tile.SIZE), 0, WidthInTiles);
-            int ey = Mathf.Clamp(Mathf.CeilToInt(camBounds.Bottom / Tile.SIZE), 0, HeightInTiles);
+            int ex = Mathf.Clamp(Mathf.CeilToInt(camBounds.Right / Tile.SIZE) + 1, 0, WidthInTiles);
+            int ey = Mathf.Clamp(Mathf.CeilToInt(camBounds.Bottom / Tile.SIZE) + 1, 0, HeightInTiles);
 
-            Sprite toDraw = Entity.Scene.Content.LoadSpriteAtlas("./Content/MainAtlas.atlas").GetSprite("Tiles/Dirt");
-            Sprite toDraw2 = Entity.Scene.Content.LoadSpriteAtlas("./Content/MainAtlas.atlas").GetSprite("Tiles/Stone");
+            Sprite toDraw = Main.Atlas.GetSprite("Tiles/Dirt");
+            Sprite toDraw2 = Main.Atlas.GetSprite("Tiles/Stone");
             
             var start = Transform.Position;
             for (int x = sx; x < ex; x++)

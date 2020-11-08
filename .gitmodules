@@ -7,3 +7,6 @@
 [submodule "JDef2"]
 	path = JDef2
 	url = https://github.com/Epicguru/JDef2
+[submodule "MTD_Content"]
+	path = MTD_Content
+	url = https://github.com/Epicguru/MTD_Content

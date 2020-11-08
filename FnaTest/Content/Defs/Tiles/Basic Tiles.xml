@@ -1,0 +1,14 @@
+﻿
+<Defs>
+
+  <StoneTile parent="BaseTile">
+    <Name>Stone</Name>
+    <Sprite>Tiles/Stone</Sprite>
+  </StoneTile>
+
+  <DirtTile parent="BaseTile">
+    <Name>Dirt</Name>
+    <Sprite>Tiles/Dirt</Sprite>
+  </DirtTile>
+
+</Defs>

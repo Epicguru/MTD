@@ -9,6 +9,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="fnalibs\**" />
+    <EmbeddedResource Remove="fnalibs\**" />
+    <None Remove="fnalibs\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\FNA\FNA.Core.csproj" />
     <ProjectReference Include="..\JDef2\JDef\JDef.FNA.csproj" />
     <ProjectReference Include="..\Nez\Nez.ImGui\Nez.FNA.Standard.ImGui.csproj" />

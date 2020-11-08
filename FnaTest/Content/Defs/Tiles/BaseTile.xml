@@ -1,0 +1,7 @@
+﻿
+<BaseTile abstract="true" class="MTD.World.TileDef">
+
+  <Sprite>Tiles/MissingTexture</Sprite>
+  <Class>MTD.World.Tile</Class>
+
+</BaseTile>

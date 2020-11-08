@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using Nez;
 using Nez.Tools.Atlases;
@@ -43,35 +44,83 @@ namespace MTD
             }
         }
 
+        public static bool PackAll(string source, string dest, Action<string> step = null)
+        {
+            if (!Directory.Exists(source))
+                return false;
+
+            List<string> subs = new List<string>();
+            foreach (var dir in Directory.EnumerateDirectories(source, "", SearchOption.AllDirectories))
+            {
+                bool isSub = Path.GetFileName(dir).StartsWith("[Atlas]");
+                if (isSub)
+                    subs.Add(dir);
+            }
+
+            bool main = Pack(source, dest, step);
+            if (!main)
+                return false;
+
+            foreach (var sub in subs)
+            {
+                string folderName = Path.GetFileName(sub).Substring("[Atlas]".Length);
+                string subDest = Path.Combine(new DirectoryInfo(sub).Parent.FullName, folderName);
+
+                bool worked = Pack(sub, subDest, step);
+                if (!worked)
+                    return false;
+            }
+
+            return true;
+        }
+
         public static bool Pack(string relativeSource, string relativeDest, Action<string> step = null)
         {
-            Func<string, bool> ShouldPack = (file) =>
+            bool IsFontTexture(string file)
             {
                 // Font textures are in the format NAME_X.png where NAME is the name of the font (NAME.fnt)
                 // and X is the texture index, an integer.
                 string fileName = Path.GetFileNameWithoutExtension(file);
                 if (fileName.IndexOf('_') == -1)
-                    return true;
+                    return false;
 
                 string[] split = fileName.Split('_');
-                if (split.Length != 2)
-                    return true;
+                if (split.Length != 2) return false;
 
                 bool secondPartIsNum = int.TryParse(split[1], out int _);
-                if (!secondPartIsNum)
-                    return true;
+                if (!secondPartIsNum) return false;
 
                 string fontName = split[0];
 
                 var fi = new FileInfo(file);
                 string fontPath = Path.Combine(fi.DirectoryName, fontName + ".fnt");
-                bool add = !File.Exists(fontPath);
-
-                if (!add)
+                if (File.Exists(fontPath))
+                {
                     Debug.Log("Excluding font texture: {0}{1}", fileName, ".png");
+                    return true;
+                }
+                return false;
+            }
 
-                return add;
-            };
+            bool IsAtlasTexture(string file)
+            {
+                string fileName = Path.GetFileNameWithoutExtension(file);
+
+                // Check that it isn't a sub-atlas.
+                string atlasFilePath = Path.Combine(new FileInfo(file).DirectoryName, fileName + ".atlas");
+                if (File.Exists(atlasFilePath))
+                {
+                    Debug.Log("Excluding sub-atlas texture: {0}{1}", fileName, ".atlas");
+                    return true;
+                }
+
+                return false;
+            }
+
+            bool ShouldPack(string file)
+            {
+                return !IsFontTexture(file) && !IsAtlasTexture(file);
+            }
 
             try
             {
@@ -81,6 +130,7 @@ namespace MTD
                 int code = SpriteAtlasPacker.PackSprites(config, step, ShouldPack);
                 if (code != 0)
                     throw new Exception($"Packing failed with error code {code}: {(SpriteAtlasPacker.FailCode) code}");
+
                 return true;
             }
             catch (Exception e)
@@ -88,7 +138,6 @@ namespace MTD
                 Debug.Error("Exception packing sprites:\n{0}", e);
                 return false;
             }
-            
         }
     }
 }
