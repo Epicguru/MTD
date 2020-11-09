@@ -3,6 +3,9 @@
   <EntityDef abstract="true" class="MTD.Entities.EntityDef">
 
     <Scale>(1, 1)</Scale>
+    <Components mode="">
+
+    </Components>
 
   </EntityDef>
 

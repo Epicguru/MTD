@@ -7,6 +7,7 @@ using MTD.Components;
 using MTD.Entities;
 using MTD.Scenes;
 using MTD.World;
+using MTD.World.Pathfinding;
 using Nez;
 using Nez.BitmapFonts;
 using Nez.Console;
@@ -41,6 +42,9 @@ namespace MTD
 
         public static BitmapFont Font48 { get; private set; }
         public static BitmapFont FontTitle { get; private set; }
+
+        public static int PathfindingThreadCount { get; set; } = 4;
+        public static Pathfinder Pathfinder { get; internal set; }
 
         private static ThreadController _threadController;
 
@@ -115,6 +119,12 @@ namespace MTD
                 Defs.LoadFromDir("Content/Defs/");
                 ls.SetMessage("Processing defs...");
                 Defs.Process();
+
+                // Load specific classes of defs.
+                ls.SetMessage("Sorting defs...");
+                TileDef.Load();
+                EntityDef.Load();
+
                 #endregion
 
                 sw.Stop();
@@ -238,6 +248,8 @@ namespace MTD
 
         public override void Update()
         {
+            Input.SetMouseOverImGui(ImGui.IsAnyItemHovered());
+
             for (int i = 0; i < canvases.Count; i++)
             {
                 var c = canvases[i];
@@ -407,7 +419,9 @@ namespace MTD
                 var gs = new GameScene();
                 LoadingScene.LoadAndChangeScene(gs, () =>
                 {
-                    gs.Layer = GameScene.GenerateLayer(1000, 100);
+                    var map = new Map(200, 100);
+                    GameScene.GenerateLayer(map.Layers[0]);
+                    gs.Map = map;
                 });
             };
 
@@ -470,13 +484,7 @@ namespace MTD
 
             ImGui.Spacing();
 
-            float f = FindComponentOfType<TileLayer>()?.RenderedTileCount ?? 0;
-            renderedTileCount[_plotIndex] = f;
-            _plotIndex = (_plotIndex + 1) % renderedTileCount.Length;
-
-            ImGui.PlotLines("Rendered tiles", ref renderedTileCount[0], renderedTileCount.Length, _plotIndex,
-                $"Tiles: {f:F0}", 0, 100000, new Vector2(ImGui.GetContentRegionAvail().X, 150).ToNumerics());
-
+            ImGui.Text($"World Mouse Pos: {Input.WorldMousePos}");
             ImGui.End();
         }
     }

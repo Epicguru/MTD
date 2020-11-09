@@ -6,13 +6,10 @@ using Nez.Textures;
 
 namespace MTD.World
 {
-    public class TileLayer : RenderableComponent
+    public class TileLayer
     {
         public readonly int WidthInTiles, HeightInTiles;
         public int RenderedTileCount { get; private set; }
-
-        public override float Width => WidthInTiles * Tile.SIZE;
-        public override float Height => HeightInTiles * Tile.SIZE;
 
         private Tile[] tiles;
 
@@ -22,12 +19,6 @@ namespace MTD.World
             HeightInTiles = tileHeight;
 
             tiles = new Tile[WidthInTiles * HeightInTiles];
-        }
-
-        public override void OnRemovedFromEntity()
-        {
-            base.OnRemovedFromEntity();
-            tiles = null;
         }
 
         /// <summary>
@@ -58,6 +49,7 @@ namespace MTD.World
         /// <param name="x">The tile X position.</param>
         /// <param name="y">The tile Y position.</param>
         /// <returns>The Tile, or null.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Tile GetTile(int x, int y)
         {
             return IsInBounds(x, y) ? GetTileFast(x, y) : null;
@@ -104,7 +96,7 @@ namespace MTD.World
             tile?.OnPlaced(fromLoadOrUnload);
         }
 
-        public override void Render(Batcher batcher, Camera camera)
+        public void Render(Batcher batcher, Camera camera, float depth)
         {
             var camBounds = camera.Bounds;
             int sx = Mathf.Clamp(Mathf.FloorToInt(camBounds.X / Tile.SIZE), 0, WidthInTiles);
@@ -117,7 +109,7 @@ namespace MTD.World
                 for (int y = sy; y < ey; y++)
                 {
                     var tile = GetTileFast(x, y);
-                    tile?.Draw(batcher, camera);
+                    tile?.Draw(batcher, camera, depth);
                 }
             }
 

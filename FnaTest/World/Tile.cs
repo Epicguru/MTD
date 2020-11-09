@@ -45,12 +45,12 @@ namespace MTD.World
         /// <summary>
         /// Renders the tile to it's current position and state.
         /// </summary>
-        public virtual void Draw(Batcher b, Camera c)
+        public virtual void Draw(Batcher b, Camera c, float depth)
         {
             var spr = Def.Sprite;
             if (spr == null)
                 return;
-            b.Draw(spr, new Vector2(X * SIZE, Y * SIZE), this.Color.Multiply(Layer.Color), 0f, spr.Origin, 1f, SpriteEffects.None, Layer.LayerDepth);
+            b.Draw(spr, new Vector2(X * SIZE, Y * SIZE), this.Color, 0f, spr.Origin, 1f, SpriteEffects.None, depth);
         }
 
         /// <summary>

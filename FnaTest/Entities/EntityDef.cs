@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework;
 using Nez;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace MTD.Entities
 {
@@ -10,6 +11,29 @@ namespace MTD.Entities
     /// </summary>
     public class EntityDef : Def
     {
+        private static readonly Dictionary<string, EntityDef> namedDefs = new Dictionary<string, EntityDef>();
+        private static EntityDef[] allDefs;
+        internal static void Load()
+        {
+            var db = Main.Defs;
+            var all = db.GetAllOfType<EntityDef>();
+            foreach (var def in all)
+            {
+                namedDefs.Add(def.DefName, def);
+            }
+            allDefs = namedDefs.Values.ToArray();
+        }
+        public static EntityDef Get(string defName)
+        {
+            if (namedDefs.TryGetValue(defName, out var def))
+                return def;
+            return null;
+        }
+        public static IReadOnlyList<EntityDef> GetAll()
+        {
+            return allDefs;
+        }
+
         public string Name;
         public Vector2 Scale;
         public Vector2 LocalPosition;

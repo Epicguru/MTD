@@ -13,10 +13,20 @@
 
       <li class="MTD.Entities.HealthDef">
         <MaxHealth>6942</MaxHealth>
+        <AllowHealAfterDeath>true</AllowHealAfterDeath>
       </li>
 
     </Components>
 
   </TestEntityDef>
+
+  <OtherEntityDef parent="TestEntityDef">
+    <Name>Something cool</Name>
+    <Components>
+      <li class="MTD.Entities.HealthDef">
+        <MaxHealth>69</MaxHealth>
+      </li>
+    </Components>
+  </OtherEntityDef>
 
 </Defs>

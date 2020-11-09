@@ -3,11 +3,36 @@ using Microsoft.Xna.Framework;
 using Nez;
 using Nez.Textures;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace MTD.World
 {
     public class TileDef : Def
     {
+        private static readonly Dictionary<string, TileDef> namedDefs = new Dictionary<string, TileDef>();
+        private static TileDef[] allDefs;
+        internal static void Load()
+        {
+            var db = Main.Defs;
+            var all = db.GetAllOfType<TileDef>();
+            foreach (var def in all)
+            {
+                namedDefs.Add(def.DefName, def);
+            }
+            allDefs = namedDefs.Values.ToArray();
+        }
+        public static TileDef Get(string defName)
+        {
+            if (namedDefs.TryGetValue(defName, out var def))
+                return def;
+            return null;
+        }
+        public static IReadOnlyList<TileDef> GetAll()
+        {
+            return allDefs;
+        }
+
         /// <summary>
         /// The name of the tile.
         /// </summary>

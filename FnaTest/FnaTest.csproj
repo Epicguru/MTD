@@ -37,6 +37,10 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="OptimizedPriorityQueue" Version="5.0.0" />
+  </ItemGroup>
+
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
     <Exec Command="XCOPY $(ProjectDir)Content\ $(TargetDir)Content\ /S /Y /V" />
   </Target>

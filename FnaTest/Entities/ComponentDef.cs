@@ -121,12 +121,14 @@ namespace MTD.Entities
         public int StartHealth = 100;
         public bool StartWithMaxHealth = true;
         public bool DestroyUponDeath = true;
+        public bool AllowHealAfterDeath = false;
 
         public override Component Create()
         {
             return new Health(StartWithMaxHealth ? MaxHealth : StartHealth, MaxHealth)
             {
-                DestroyUponDeath = DestroyUponDeath
+                DestroyUponDeath = DestroyUponDeath,
+                AllowHealAfterDeath = AllowHealAfterDeath
             };
         }
     }
