@@ -8,15 +8,17 @@ namespace MTD.World
 {
     public class TileLayer
     {
-        public readonly int WidthInTiles, HeightInTiles;
+        public readonly int WidthInTiles, HeightInTiles, Depth;
+        public Map Map { get; internal set; }
         public int RenderedTileCount { get; private set; }
 
         private Tile[] tiles;
 
-        public TileLayer(int tileWidth, int tileHeight)
+        public TileLayer(int tileWidth, int tileHeight, int depth)
         {
             WidthInTiles = tileWidth;
             HeightInTiles = tileHeight;
+            Depth = depth;
 
             tiles = new Tile[WidthInTiles * HeightInTiles];
         }
@@ -50,7 +52,7 @@ namespace MTD.World
         /// <param name="y">The tile Y position.</param>
         /// <returns>The Tile, or null.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Tile GetTile(int x, int y)
+        internal Tile GetTile(int x, int y)
         {
             return IsInBounds(x, y) ? GetTileFast(x, y) : null;
         }
@@ -64,7 +66,7 @@ namespace MTD.World
         /// <param name="y">The tile Y position.</param>
         /// <returns>The Tile, or null.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Tile GetTileFast(int x, int y)
+        internal Tile GetTileFast(int x, int y)
         {
             return tiles[GetTileIndex(x, y)];
         }
@@ -74,7 +76,7 @@ namespace MTD.World
             tiles[index]?.Tick();
         }
 
-        public Tile SetTile(int x, int y, TileDef tile, bool fromLoadOrUnload = false)
+        internal Tile SetTile(int x, int y, TileDef tile, bool fromLoadOrUnload = false)
         {
             if (!IsInBounds(x, y))
                 return null;

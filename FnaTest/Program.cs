@@ -20,7 +20,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Threading;
 using Debug = Nez.Debug;
 
 namespace MTD
@@ -39,8 +38,9 @@ namespace MTD
     {
         public static DefDatabase Defs { get; private set; }
         public static SpriteAtlas Atlas { get; private set; }
+        public static SpriteAtlas UIAtlas { get; private set; }
 
-        public static BitmapFont Font48 { get; private set; }
+        public static BitmapFont Font32 { get; private set; }
         public static BitmapFont FontTitle { get; private set; }
 
         public static int PathfindingThreadCount { get; set; } = 4;
@@ -64,6 +64,13 @@ namespace MTD
             RegisterGlobalManager(_threadController = new ThreadController());
 
             Scene = CreateLoadCoreAssetsScene();
+        }
+
+        protected override void OnExiting(object sender, EventArgs args)
+        {
+            base.OnExiting(sender, args);
+
+            Pathfinder?.Dispose();
         }
 
         private LoadingScene CreateLoadCoreAssetsScene()
@@ -125,6 +132,9 @@ namespace MTD
                 TileDef.Load();
                 EntityDef.Load();
 
+                ls.SetMessage("Loading ui atlas...");
+                UIAtlas = Content.LoadSpriteAtlas("Content/UI.atlas", true);
+
                 #endregion
 
                 sw.Stop();
@@ -175,7 +185,7 @@ namespace MTD
 
         private void LoadEssentialContent()
         {
-            Font48 = Content.LoadBitmapFont("Content/Fonts/MyFont.fnt");
+            Font32 = Content.LoadBitmapFont("Content/Fonts/General30.fnt");
             FontTitle = Content.LoadBitmapFont("Content/Fonts/Title72.fnt");
         }
 
@@ -267,6 +277,26 @@ namespace MTD
             }
 
             base.Update();
+        }
+
+        [Command("ui-debug", "Toggles all canvas ui debug rendering on or off.")]
+        private static void ToggleDebugMouse()
+        {
+            bool toToggleTo = false;
+            bool hasDecidedToggle = false;
+            foreach (var c in canvases)
+            {
+                if (c == null || c.Entity.IsNullOrDestroyed() || c.Stage == null)
+                    continue;
+
+                if (!hasDecidedToggle)
+                {
+                    hasDecidedToggle = true;
+                    toToggleTo = !c.Stage.GetDebugAll();
+                }
+
+                c.Stage.SetDebugAll(toToggleTo);
+            }
         }
 
         [Command("ui-scale", "Get or set the ui scale.")]
@@ -395,7 +425,7 @@ namespace MTD
             ui.IsFullScreen = true;
 
             var skin = Skin.CreateDefaultSkin();
-            var font = Main.Font48;
+            var font = Main.Font32;
             skin.Get<LabelStyle>().Font = font;
             skin.Get<TextButtonStyle>().Font = font;
             skin.Get<WindowStyle>().TitleFont = font;
@@ -421,6 +451,7 @@ namespace MTD
                 {
                     var map = new Map(200, 100);
                     GameScene.GenerateLayer(map.Layers[0]);
+                    map.PlaceAllColliders();
                     gs.Map = map;
                 });
             };
@@ -444,7 +475,6 @@ namespace MTD
         }
 
         private float[] renderedTileCount = new float[200];
-        private int _plotIndex;
 
         private void DrawSomeUI()
         {

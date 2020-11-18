@@ -117,9 +117,14 @@ namespace MTD
                 return false;
             }
 
+            bool IsNezFolder(string file)
+            {
+                return Path.GetFullPath(file).Replace("\\", "/").Contains("/nez/");
+            }
+
             bool ShouldPack(string file)
             {
-                return !IsFontTexture(file) && !IsAtlasTexture(file);
+                return !IsNezFolder(file) && !IsFontTexture(file) && !IsAtlasTexture(file);
             }
 
             try

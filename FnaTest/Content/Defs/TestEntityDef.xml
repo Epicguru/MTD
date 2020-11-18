@@ -29,4 +29,24 @@
     </Components>
   </OtherEntityDef>
 
+  <PathFollowerDef parent="EntityDef">
+    <Name>Path Follower</Name>
+
+    <Components>
+
+      <li class="MTD.Entities.SpriteRendererDef">
+        <Sprite>Tiles/Human_F</Sprite>
+      </li>
+
+      <li class="MTD.Entities.PathFollowerDef">
+        <MovementSpeed>6</MovementSpeed>
+      </li>
+
+      <li class="MTD.Entities.BoxColliderDef">
+        <Size>(10, 16)</Size>
+      </li>
+
+    </Components>
+  </PathFollowerDef>
+
 </Defs>

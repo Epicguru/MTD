@@ -11,6 +11,8 @@ namespace MTD.Entities
     {
         public abstract Type Class { get; }
 
+        public int UpdateOrder;
+
         public override bool Equals(object obj)
         {
             if (obj is ComponentDef otherDef)
@@ -56,7 +58,7 @@ namespace MTD.Entities
 
         public virtual void ApplyValues(Component c)
         {
-
+            c.UpdateOrder = UpdateOrder;
         }
 
         public override int GetHashCode()
@@ -130,6 +132,64 @@ namespace MTD.Entities
                 DestroyUponDeath = DestroyUponDeath,
                 AllowHealAfterDeath = AllowHealAfterDeath
             };
+        }
+    }
+
+    public class PathFollowerDef : ComponentDef
+    {
+        public override Type Class => typeof(PathFollower);
+
+        public float MovementSpeed = 5f;
+        public bool FaceMovementDirection = true;
+
+        public override Component Create()
+        {
+            return new PathFollower()
+            {
+                MovementSpeed = this.MovementSpeed,
+                FaceMovementDirection = this.FaceMovementDirection
+            };
+        }
+
+        public override void Validate()
+        {
+            base.Validate();
+
+            if (MovementSpeed <= 0)
+            {
+                ValidateError($"Path follower MovementSpeed must be greater than zero! Value: {MovementSpeed}");
+            }
+        }
+    }
+
+    public abstract class ColliderDef : ComponentDef
+    {
+        public Vector2 LocalOffset = new Vector2();
+        public bool ScaleAndRotateWithTransform = true;
+        public bool IsTrigger = false;
+
+        public override void ApplyValues(Component c)
+        {
+            base.ApplyValues(c);
+
+            if (c is Collider coll)
+            {
+                coll.LocalOffset = LocalOffset;
+                coll.SetShouldColliderScaleAndRotateWithTransform(ScaleAndRotateWithTransform);
+                coll.IsTrigger = IsTrigger;
+            }
+        }
+    }
+
+    public class BoxColliderDef : ComponentDef
+    {
+        public override Type Class => typeof(BoxCollider);
+
+        public Vector2 Size = new Vector2(32, 32);
+
+        public override Component Create()
+        {
+            return new BoxCollider(Size.X, Size.Y);
         }
     }
 }

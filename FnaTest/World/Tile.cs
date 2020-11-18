@@ -17,6 +17,24 @@ namespace MTD.World
                 return Def?.Name;
             }
         }
+        public bool IsSolid
+        {
+            get
+            {
+                return !Def.CanClimb;
+            }
+        }
+
+        public Collider Collider
+        {
+            get
+            {
+                if (Layer?.Depth != 0)
+                    return null;
+
+                return Layer?.Map?.GetCollider(X, Y);
+            }
+        }
 
         public readonly int X, Y;
         public readonly TileDef Def;
@@ -50,6 +68,7 @@ namespace MTD.World
             var spr = Def.Sprite;
             if (spr == null)
                 return;
+
             b.Draw(spr, new Vector2(X * SIZE, Y * SIZE), this.Color, 0f, spr.Origin, 1f, SpriteEffects.None, depth);
         }
 

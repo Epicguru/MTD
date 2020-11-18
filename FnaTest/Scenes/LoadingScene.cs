@@ -67,7 +67,7 @@ namespace MTD.Scenes
                 return;
             }
 
-            coreAssetsLoaded = Main.Font48 != null;
+            coreAssetsLoaded = Main.Font32 != null;
 
             // Version with fancy graphics
             if(coreAssetsLoaded)

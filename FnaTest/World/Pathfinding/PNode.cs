@@ -17,6 +17,14 @@ namespace MTD.World.Pathfinding
                 return Capacity - poolIndex;
             }
         }
+        public int UsedNodeCount
+        {
+            get
+            {
+                return poolIndex;
+            }
+        }
+        public int PoolExcess { get; private set; }
 
         private PNode[] pool;
         private int poolIndex;
@@ -34,18 +42,19 @@ namespace MTD.World.Pathfinding
         public void Restart()
         {
             poolIndex = 0;
+            PoolExcess = 0;
         }
 
         public PNode Create(int x, int y)
         {
-            var current = pool[poolIndex];
-            poolIndex++;
             if (poolIndex >= pool.Length)
             {
-                Debug.Error("Exceeded PNode pool length, wrapping around... Will most likely cause errors.");
-                poolIndex = 0;
+                PoolExcess++;
+                return new PNode(x, y);
             }
 
+            var current = pool[poolIndex];
+            poolIndex++;
             current.X = x;
             current.Y = y;
             return current;

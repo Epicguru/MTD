@@ -66,6 +66,11 @@ namespace MTD.World
         /// </summary>
         public int TickInterval;
 
+        /// <summary>
+        /// Can pawns climb this tile?
+        /// </summary>
+        public bool CanClimb;
+
         public override void Validate()
         {
             base.Validate();

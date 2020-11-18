@@ -1,15 +1,45 @@
-﻿using Microsoft.Xna.Framework;
-using System;
+﻿
+#define DO_DIAGONALS
+
+using Microsoft.Xna.Framework;
 using Priority_Queue;
+using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
-using Nez;
 using System.Runtime.CompilerServices;
 
 namespace MTD.World.Pathfinding
 {
     public class PathCalculator : IDisposable
     {
+        private static readonly ConcurrentQueue<List<Point>> pathCache = new ConcurrentQueue<List<Point>>();
+        public static void FreePath(List<Point> path)
+        {
+            if (path == null)
+                return;
+
+            path.Clear();
+            pathCache.Enqueue(path);
+        }
+        private static List<Point> CreatePath()
+        {
+            if (pathCache.TryDequeue(out var list))
+                return list;
+
+            return new List<Point>(128);
+        }
+
         public readonly int MaxOpenNodes;
+        public int PreviousPathPNodeUsage { get; private set; }
+        public int PreviousPoolExcess { get; private set; }
+        public int PNodeMaxPoolCapacity
+        {
+            get
+            {
+                return pool?.Capacity ?? 1;
+            }
+        }
+        public int LastPeakOpenNodes { get; private set; }
 
         public Map Map;
 
@@ -17,10 +47,9 @@ namespace MTD.World.Pathfinding
         private Dictionary<PNode, PNode> cameFrom;
         private Dictionary<PNode, float> costSoFar;
         private List<PNode> near;
-        private bool left, right, below, above;
         private PNodePool pool;
 
-        public PathCalculator(Map map, int maxOpenNodes = 500)
+        public PathCalculator(Map map, int maxOpenNodes = 2000)
         {
             Map = map ?? throw new ArgumentNullException(nameof(map));
             MaxOpenNodes = maxOpenNodes;
@@ -29,7 +58,7 @@ namespace MTD.World.Pathfinding
             cameFrom = new Dictionary<PNode, PNode>();
             costSoFar = new Dictionary<PNode, float>();
             near = new List<PNode>();
-            pool = new PNodePool(maxOpenNodes * 8);
+            pool = new PNodePool(map.WidthInTiles * map.HeightInTiles * 5); // Would theoretically require 4 to never have to allocate.
         }
 
         public void Dispose()
@@ -53,12 +82,15 @@ namespace MTD.World.Pathfinding
             {
                 return PathResult.ERROR_START_IS_END;
             }
-            if (!Map.IsWalkable(end.X, end.Y))
+            if (!Map.CanStand(end.X, end.Y))
             {
                 return PathResult.ERROR_END_IS_UNWALKABLE;
             }
 
             Clear(); // This is a pretty expensive call... Maybe find a clever way to optimize?
+            PreviousPathPNodeUsage = pool.UsedNodeCount;
+            PreviousPoolExcess = pool.PoolExcess;
+            LastPeakOpenNodes = 0;
             pool.Restart();
 
             var startNode = pool.Create(start);
@@ -76,10 +108,13 @@ namespace MTD.World.Pathfinding
                     return PathResult.ERROR_PATH_TOO_LONG;
                 }
 
-                if (pool.SpaceRemaining <= 8)
-                {
-                    return PathResult.ERROR_PATH_TOO_LONG;
-                }
+                //if (pool.SpaceRemaining <= 8)
+                //{
+                //    return PathResult.ERROR_PATH_TOO_LONG;
+                //}
+
+                if (count > LastPeakOpenNodes)
+                    LastPeakOpenNodes = count;
 
                 PNode current = open.Dequeue();
                 count--;
@@ -92,27 +127,26 @@ namespace MTD.World.Pathfinding
 
                 float currentCostSoFar = costSoFar[current];
 
-                //Vector2 pos = Map.Current.TileToWorldPosition(current);
-                //Debug.DrawHollowBox(pos, Tile.SIZE, Color.Orange, 5);
-                //Debug.DrawText(Graphics.Instance.BitmapFont, $"{(int)(costSoFar[current] + Heuristic(current, endNode))}", pos - new Vector2(Tile.SIZE * 0.4f), Color.Orange, 5, 0.5f);
+                Vector2 pos = Map.Current.TileToWorldPosition(current);
+                //Debug.DrawHollowBox(pos, Tile.SIZE, Color.Orange, 0);
 
                 GetNear(current);
                 foreach (var n in near)
                 {
-                    var nClone = n;
-
                     // newCost: This is the (exact) total path cost from the start node to this neighbor.
-                    float newCost = currentCostSoFar + GetCost(current, nClone);
-                    bool hasCostSoFar = costSoFar.TryGetValue(nClone, out float nCostSoFar);
+                    float newCost = currentCostSoFar + GetCost(current, n);
+                    bool hasCostSoFar = costSoFar.TryGetValue(n, out float nCostSoFar);
 
                     // If the node has never been explored, or the current path is shorter than a prevous route...
                     if (!hasCostSoFar || newCost < nCostSoFar)
                     {
-                        costSoFar[nClone] = newCost;
+                        costSoFar[n] = newCost;
                         float priority = newCost + Heuristic(n, endNode);
                         open.Enqueue(n, priority);
                         count++;
-                        cameFrom[nClone] = current;
+                        cameFrom[n] = current;
+                        pos = Map.Current.TileToWorldPosition(n);
+                        //Debug.DrawHollowBox(pos, Tile.SIZE - 4, Color.Blue, 0);
                     }
                 }
             }
@@ -122,7 +156,7 @@ namespace MTD.World.Pathfinding
 
         private List<Point> TracePath(PNode end)
         {
-            var path = ListPool<Point>.Obtain();
+            var path = CreatePath();
 
             PNode child = end;
 
@@ -149,73 +183,71 @@ namespace MTD.World.Pathfinding
         {
             near.Clear();
 
+            int x = node.X;
+            int y = node.Y;
+
             // Left
-            left = false;
-            if (Map.IsWalkable(node.X - 1, node.Y))
+            if (Map.CanStand(x - 1, y))
             {
-                near.Add(pool.Create(node.X - 1, node.Y));
-                left = true;
+                near.Add(pool.Create(x - 1, y));
             }
 
             // Right
-            right = false;
-            if (Map.IsWalkable(node.X + 1, node.Y))
+            if (Map.CanStand(x + 1, y))
             {
-                near.Add(pool.Create(node.X + 1, node.Y));
-                right = true;
-            }
-
-            // Above
-            above = false;
-            if (Map.IsWalkable(node.X, node.Y + 1))
-            {
-                near.Add(pool.Create(node.X, node.Y + 1));
-                above = true;
+                near.Add(pool.Create(x + 1, y));
             }
 
             // Below
-            below = false;
-            if (Map.IsWalkable(node.X, node.Y - 1))
+            if (Map.CanStand(x, y + 1))
             {
-                near.Add(pool.Create(node.X, node.Y - 1));
-                below = true;
+                near.Add(pool.Create(x, y + 1));
             }
 
-            // Above-Left
-            if (left && above)
+            // Above
+            if (Map.CanStand(x, y - 1))
             {
-                if (Map.IsWalkable(node.X - 1, node.Y + 1))
+                near.Add(pool.Create(x, y - 1));
+            }
+
+#if DO_DIAGONALS
+
+            // Below-Left. Can't have impassable tile to the left.
+            if (!Map.IsImpassable(x - 1, y))
+            {
+                if (Map.CanStand(x - 1, y + 1))
                 {
-                    near.Add(pool.Create(node.X - 1, node.Y + 1));
+                    near.Add(pool.Create(x - 1, y + 1));
                 }
             }
 
-            // Above-Right
-            if (right && above)
+            // Below-Right. Can't have impassable tile to the right.
+            if (!Map.IsImpassable(x + 1, y))
             {
-                if (Map.IsWalkable(node.X + 1, node.Y + 1))
+                if (Map.CanStand(x + 1, y + 1))
                 {
-                    near.Add(pool.Create(node.X + 1, node.Y + 1));
+                    near.Add(pool.Create(x + 1, y + 1));
                 }
             }
 
-            // Below-Left
-            if (left && below)
+            // Above-Left. Can't have impassable tile above.
+            if (!Map.IsImpassable(x, y - 1))
             {
-                if (Map.IsWalkable(node.X - 1, node.Y - 1))
+                if (Map.CanStand(x - 1, y - 1))
                 {
-                    near.Add(pool.Create(node.X - 1, node.Y - 1));
+                    near.Add(pool.Create(x - 1, y - 1));
                 }
             }
 
-            // Below-Right
-            if (right && below)
+            // Above-Right. Can't have impassable tile above.
+            if (!Map.IsImpassable(x, y - 1))
             {
-                if (Map.IsWalkable(node.X + 1, node.Y - 1))
+                if (Map.CanStand(x + 1, y - 1))
                 {
-                    near.Add(pool.Create(node.X + 1, node.Y - 1));
+                    near.Add(pool.Create(x + 1, y - 1));
                 }
             }
+#endif
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -254,6 +286,7 @@ namespace MTD.World.Pathfinding
         {
             // Gives a rough distance.
             return Abs(a.X - b.X) + Abs(a.Y - b.Y);
+            //return Mathf.Sqrt((a.X - b.X) * (a.X - b.X) + (a.Y - b.Y) * (a.Y - b.Y));
         }
 
         private void Clear()

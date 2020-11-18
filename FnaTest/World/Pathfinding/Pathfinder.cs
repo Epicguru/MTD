@@ -1,7 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Nez;
 using System;
-using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
@@ -10,6 +9,11 @@ namespace MTD.World.Pathfinding
 {
     public class Pathfinder : IDisposable
     {
+        public static void FreePath(List<Point> path)
+        {
+            PathCalculator.FreePath(path);
+        }
+
         public class Request
         {
             // From request.
@@ -30,14 +34,14 @@ namespace MTD.World.Pathfinding
         private ConcurrentQueue<Request> pendingReturns;
 
         public int ThreadIdleWaitTimeMS = 1;
-        public int MaxOpenNodes = 500;
+        public int MaxOpenNodes = 2000;
 
         private Thread[] threads;
         private PathCalculator[] calculators;
-        private int[][] pathTimes;
         private int[] pathTimesHeads;
         private float[] threadProcessingPercentages;
         private int[] threadRequestsProcessedPerSecond;
+        private float[][] pathTimes;
         private bool run;
 
         public Pathfinder(int threadCount)
@@ -76,13 +80,13 @@ namespace MTD.World.Pathfinding
             run = true;
             threads = new Thread[ThreadCount];
             calculators = new PathCalculator[ThreadCount];
-            pathTimes = new int[ThreadCount][];
             pathTimesHeads = new int[ThreadCount];
             threadProcessingPercentages = new float[ThreadCount];
             threadRequestsProcessedPerSecond = new int[ThreadCount];
+            pathTimes = new float[ThreadCount][];
             for (int i = 0; i < ThreadCount; i++)
             {
-                pathTimes[i] = new int[100];
+                pathTimes[i] = new float[100];
 
                 var calc = new PathCalculator(map, MaxOpenNodes);
                 calculators[i] = calc;
@@ -91,7 +95,7 @@ namespace MTD.World.Pathfinding
                 thread.Priority = ThreadPriority.AboveNormal;
                 threads[i] = thread;
 
-                thread.Start();
+                thread.Start(i);
             }
         }
 
@@ -114,7 +118,7 @@ namespace MTD.World.Pathfinding
             {
                 foreach (var thread in threads)
                 {
-                    thread.Abort();
+                    thread.Join();
                 }
             }
             threads = null;
@@ -126,8 +130,10 @@ namespace MTD.World.Pathfinding
             var calc = calculators[threadIndex];
             double timeSpentThisSecond = 0.0;
             int processedThisSecond = 0;
+            int head = 0;
             var stopwatch = new System.Diagnostics.Stopwatch();
             var secondTimer = new System.Diagnostics.Stopwatch();
+            float[] times = this.pathTimes[threadIndex];
             secondTimer.Start();
 
             while (run)
@@ -172,14 +178,11 @@ namespace MTD.World.Pathfinding
                 pendingReturns.Enqueue(req);
 
                 processedThisSecond++;
-                int time = (int)stopwatch.ElapsedMilliseconds;
+                int time = (int)stopwatch.Elapsed.TotalMilliseconds;
                 timeSpentThisSecond += stopwatch.Elapsed.TotalSeconds;
-                int head = pathTimesHeads[threadIndex];
-                pathTimes[threadIndex][head] = time;
-                head++;
-                if (head >= pathTimes[threadIndex].Length)
-                    head = 0;
+                times[head] = time;
                 pathTimesHeads[threadIndex] = head;
+                head = (head + 1) % times.Length;
             }
         }
 
@@ -227,7 +230,7 @@ namespace MTD.World.Pathfinding
             requestPool.Enqueue(r);
         }
 
-        public void GetThreadStats(int threadIndex, out int[] pathTimes, out int pathTimesHeader, out float usagePercentage, out int processedPerSecond)
+        public void GetThreadStats(int threadIndex, out float[] pathTimes, out int pathTimesHeader, out float usagePercentage, out int processedPerSecond, out int latestNodeUsage, out float latestPNodePercentage, out float openNodesPercentage)
         {
             if (threadIndex < 0 || threadIndex >= ThreadCount)
                 throw new ArgumentOutOfRangeException(nameof(threadIndex));
@@ -236,6 +239,10 @@ namespace MTD.World.Pathfinding
             pathTimesHeader = pathTimesHeads[threadIndex];
             usagePercentage = threadProcessingPercentages[threadIndex];
             processedPerSecond = threadRequestsProcessedPerSecond[threadIndex];
+            var calc = calculators[threadIndex];
+            latestNodeUsage = calculators[threadIndex].PreviousPathPNodeUsage + calc.PreviousPoolExcess;
+            latestPNodePercentage = (float)(calc.PreviousPathPNodeUsage + calc.PreviousPoolExcess) / calc.PNodeMaxPoolCapacity;
+            openNodesPercentage = (float) calc.LastPeakOpenNodes / calc.MaxOpenNodes;
         }
 
         public void Dispose()

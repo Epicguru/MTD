@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using ImGuiNET;
+﻿using ImGuiNET;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using MTD.Entities;
@@ -9,6 +6,8 @@ using MTD.World;
 using MTD.World.Pathfinding;
 using Nez;
 using Nez.ImGuiTools;
+using Nez.Shadows;
+using System;
 using Random = Nez.Random;
 
 namespace MTD.Scenes
@@ -41,6 +40,9 @@ namespace MTD.Scenes
         }
 
         public Map Map { get; internal set; }
+        public UICanvas Canvas { get; private set; }
+
+        private PolyLight light;
 
         public override void Initialize()
         {
@@ -68,11 +70,23 @@ namespace MTD.Scenes
             mapEnt.AddComponent(Map);
 
             Core.GetGlobalManager<ImGuiManager>().RegisterDrawCommand(DrawImGui);
+
+            CreateUI(CreateEntity("UI"));
+        }
+
+        public void CreateUI(Entity target)
+        {
+            Canvas = GameSceneUI.Setup(this, Main.UIAtlas);
+            target.AddComponent(Canvas);
+            UIScaleController.RegisterCanvas(Canvas);
         }
 
         public override void Unload()
         {
             base.Unload();
+
+            UIScaleController.RemoveCanvas(Canvas);
+            Canvas = null;
 
             var path = Main.Pathfinder;
             Main.Pathfinder = null;
@@ -108,8 +122,15 @@ namespace MTD.Scenes
                 var pos = Map.MouseTileCoordinates;
                 Map.SetTile(pos.X, pos.Y, 0, null);
             }
+            if (Input.IsKeyDown(Keys.V))
+            {
+                var pos = Map.MouseTileCoordinates;
+                Map.SetTile(pos.X, pos.Y, 0, TileDef.Get("LadderTile"));
+            }
 
             base.Update();
+
+            Main.Pathfinder?.Update();
         }
 
         #region ImGui
@@ -121,6 +142,10 @@ namespace MTD.Scenes
         private string[] entityDefNames;
         private bool spawnEntityOnClick;
         private bool liveRepath;
+        private Vector2 startDrag;
+        private Vector2 endDrag;
+        private bool doWorldSelection;
+
         private void DrawImGui()
         {
             #region Pathfinding
@@ -132,26 +157,31 @@ namespace MTD.Scenes
                 if (finder != null)
                 {
                     ImGui.Text($"Thread count: {finder.ThreadCount}");
-                    ImGui.ListBoxHeader("Threads");
                     for (int i = 0; i < finder.ThreadCount; i++)
                     {
-                        finder.GetThreadStats(i, out var times, out var timesHeader, out var usage, out var processedPerSecond);
-                        var usageColor = usage < 0.5 ? Color.Green.ToNumerics() : usage < 0.9 ? Color.Yellow.ToNumerics() : Color.Red.ToNumerics();
-                        int lastTime = times[timesHeader];
-                        var lastTimeColor = lastTime <= 1 ? Color.Green.ToNumerics() : lastTime < 16 ? Color.Yellow.ToNumerics() : Color.Red.ToNumerics();
+                        finder.GetThreadStats(i, out var times, out int timesHeader, out var usage, out var processedPerSecond, out var pNodeUsage, out var pNodePercentage, out var openNodesPercentage);
+                        var usageColor = usage < 0.5 ? Color.LawnGreen.ToNumerics() : usage < 0.9 ? Color.Yellow.ToNumerics() : Color.Red.ToNumerics();
+                        float lastTime = times[timesHeader];
+                        var lastTimeColor = lastTime <= 1 ? Color.LawnGreen.ToNumerics() : lastTime < 16 ? Color.Yellow.ToNumerics() : Color.Red.ToNumerics();
+                        var poolExcessColor = pNodePercentage < 1.0 ? Color.LawnGreen.ToNumerics() : Color.Red.ToNumerics();
+                        var openNodesColor = openNodesPercentage < 0.95 ? Color.LawnGreen.ToNumerics() : Color.Red.ToNumerics();
                         ImGui.Text("Usage: ");
                         ImGui.SameLine();
-                        ImGui.TextColored(usageColor, $"{usage * 100.0:F0}%");
+                        ImGui.TextColored(usageColor, $"{usage * 100.0:F0}%%");
                         ImGui.Text($"Processed last second: {processedPerSecond}");
                         ImGui.Text("Latest path time: ");
                         ImGui.SameLine();
                         ImGui.TextColored(lastTimeColor, $"{lastTime}ms");
-                        float time = times[timesHeader];
-                        ImGui.PlotLines("Path Times", ref time, times.Length, timesHeader, "Time", 0, 100, new System.Numerics.Vector2(ImGui.GetContentRegionAvail().X, 100));
+                        ImGui.Text("PNode usage: ");
+                        ImGui.SameLine();
+                        ImGui.TextColored(poolExcessColor, $"{pNodeUsage} ({pNodePercentage*100f:F0}%%)");
+                        ImGui.Text("Open node usage: ");
+                        ImGui.SameLine();
+                        ImGui.TextColored(openNodesColor, $"{openNodesPercentage * 100f:F0}%%");
+                        ImGui.PlotLines($"#{i}Path Times", ref times[0], times.Length, timesHeader, $"#{i} Times", 0, 100, new System.Numerics.Vector2(ImGui.GetContentRegionAvail().X, 100));
+                        ImGui.Spacing();
                         ImGui.Spacing();
                     }
-
-                    ImGui.ListBoxFooter();
                 }
             }
 
@@ -202,10 +232,10 @@ namespace MTD.Scenes
                         {
                             Vector2 here = Map.TileToWorldPosition(p[i]);
                             Vector2 next = Map.TileToWorldPosition(p[i + 1]);
-                            Debug.DrawLine(here, next, Color.Green, 2);
+                            Debug.DrawLine(here, next, Color.Green, 0);
                         }
 
-                        ListPool<Point>.Free(p);
+                        Pathfinder.FreePath(p);
                     });
                 }
 
@@ -220,8 +250,6 @@ namespace MTD.Scenes
                 Debug.DrawHollowBox(Map.TileToWorldPosition(end), Tile.SIZE, Color.Red);
                 #endregion
             }
-
-            ImGui.LabelText("PNode pool count", PNode.PoolCount.ToString());
 
             ImGui.End();
 
@@ -265,6 +293,57 @@ namespace MTD.Scenes
             }
 
             ImGui.End();
+
+            #endregion
+
+            #region Entity Utils
+
+            ImGui.BeginMainMenuBar();
+            if (ImGui.BeginMenu("Entities"))
+            {
+                if (ImGui.MenuItem("Do world selection", "Ctrl+S", ref doWorldSelection))
+                {
+                    
+                }
+                ImGui.EndMenu();
+            }
+            if (ImGui.BeginMenu("UI"))
+            {
+                if (ImGui.MenuItem("Reload UI") && Canvas != null)
+                {
+                    UIScaleController.RemoveCanvas(Canvas);
+                    var e = Canvas.Entity;
+                    e.RemoveComponent(Canvas);
+                    Canvas = null;
+
+                    CreateUI(e);
+                }
+                ImGui.EndMenu();
+            }
+            ImGui.EndMainMenuBar();
+
+            if (doWorldSelection && Input.LeftMouseButtonPressed)
+            {
+                startDrag = Input.WorldMousePos;
+            }
+
+            if (doWorldSelection && Input.LeftMouseButtonDown)
+            {
+                var c = Color.Green;
+                c.A = 70;
+                endDrag = Input.WorldMousePos;
+                Debug.DrawHollowRect(new Rectangle((int)startDrag.X, (int)startDrag.Y, (int)(endDrag.X - startDrag.X), (int)(endDrag.Y - startDrag.Y)), c);
+            }
+
+            if (doWorldSelection && Input.LeftMouseButtonReleased)
+            {
+                endDrag = Input.WorldMousePos;
+                var found = Physics.OverlapRectangle(new RectangleF(startDrag, endDrag - startDrag));
+                if (found != null && !found.Entity.IsNullOrDestroyed())
+                {
+                    Core.GetGlobalManager<ImGuiManager>().StartInspectingEntity(found.Entity);
+                }
+            }
 
             #endregion
         }

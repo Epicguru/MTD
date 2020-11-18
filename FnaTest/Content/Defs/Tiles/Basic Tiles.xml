@@ -11,4 +11,10 @@
     <Sprite>Tiles/Dirt</Sprite>
   </DirtTile>
 
+  <LadderTile parent="BaseTile">
+    <Name>Ladder</Name>
+    <Sprite>Tiles/Ladder</Sprite>
+    <CanClimb>true</CanClimb>
+  </LadderTile>
+
 </Defs>
