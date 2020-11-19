@@ -27,35 +27,21 @@ namespace MTD.Scenes
         {
             var table = new Table().SetFillParent(true).Left().Top().PadLeft(10).PadTop(10);
 
-            var woodImg = new Image(atlas.GetSprite("Icons/Wood"));
-            woodImg.SetSizeImg(32, 32);
-            table.Add(woodImg).SetPadRight(5);
-            table.Add(new Label($"Wood: {123}", skin)).SetAlign(Align.Left);
-            table.Row().SetPadTop(5);
+            Label AddResource(string name, string icon, int count)
+            {
+                var img = new Image(atlas.GetSprite(icon));
+                table.Add(img).Size(32, 32).SetPadRight(5);
+                var label = new Label($"{name}: {count}", skin);
+                table.Add(label).SetAlign(Align.Left);
+                table.Row().SetPadTop(5);
+                return label;
+            }
 
-            var stoneImg = new Image(atlas.GetSprite("Icons/Stone"));
-            stoneImg.SetSizeImg(32, 32);
-            table.Add(stoneImg).SetPadRight(5);
-            table.Add(new Label($"Stone: {545}", skin)).SetAlign(Align.Left);
-            table.Row().SetPadTop(5);
-
-            var ironImg = new Image(atlas.GetSprite("Icons/Iron"));
-            ironImg.SetSizeImg(32, 32);
-            table.Add(ironImg).SetPadRight(5);
-            table.Add(new Label($"Iron: {98}", skin)).SetAlign(Align.Left);
-            table.Row().SetPadTop(5);
-
-            var goldImg = new Image(atlas.GetSprite("Icons/Gold"));
-            goldImg.SetSizeImg(32, 32);
-            table.Add(goldImg).SetPadRight(5);
-            table.Add(new Label($"Gold: {12}", skin)).SetAlign(Align.Left);
-            table.Row().SetPadTop(5);
-
-            var cobImg = new Image(atlas.GetSprite("Icons/Cobalt"));
-            cobImg.SetSizeImg(32, 32);
-            table.Add(cobImg).SetPadRight(5);
-            table.Add(new Label($"Cobalt: {49}", skin)).SetAlign(Align.Left);
-            table.Row().SetPadTop(5);
+            AddResource("Wood", "Icons/Wood", 12);
+            AddResource("Stone", "Icons/Stone", 12);
+            AddResource("Iron", "Icons/Iron", 12);
+            AddResource("Gold", "Icons/Gold", 12);
+            AddResource("Cobalt", "Icons/Cobalt", 12);
 
             stage.AddElement(table);
         }
