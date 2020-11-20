@@ -8,6 +8,7 @@ using Nez;
 using Nez.ImGuiTools;
 using Nez.Shadows;
 using System;
+using Microsoft.Xna.Framework.Graphics;
 using Random = Nez.Random;
 
 namespace MTD.Scenes
@@ -41,14 +42,21 @@ namespace MTD.Scenes
 
         public Map Map { get; internal set; }
         public UICanvas Canvas { get; private set; }
+        public static Effect TilesShader;
 
-        private PolyLight light;
+        private Material tilesMat;
 
         public override void Initialize()
         {
             base.Initialize();
 
-            AddRenderer(new DefaultRenderer());
+
+            var otherMat = new Material() {SamplerState = SamplerState.LinearClamp};
+            tilesMat = new Material() {SamplerState = SamplerState.LinearClamp, Effect=TilesShader};
+
+            AddRenderer(new RenderLayerExcludeRenderer(0, Main.LAYER_UI, Main.LAYER_TILES){Material=otherMat}); // For world objects.
+            AddRenderer(new RenderLayerRenderer(-100, Main.LAYER_TILES){Material=tilesMat}); // Only renders map, using custom shader.
+            AddRenderer(new ScreenSpaceRenderer(100, Main.LAYER_UI)); // For UI.
         }
 
         public override void OnStart()
@@ -67,11 +75,19 @@ namespace MTD.Scenes
             Main.Pathfinder.Start(Map);
 
             var mapEnt = CreateEntity("Map");
+            Map.RenderLayer = Main.LAYER_TILES;
             mapEnt.AddComponent(Map);
 
             Core.GetGlobalManager<ImGuiManager>().RegisterDrawCommand(DrawImGui);
 
+            TilesShader = Content.LoadEffect("Shaders/TileShader.fxb");
+            tilesMat.Effect = TilesShader;
+
+            Tile.LoadMasks(Main.Atlas);
+
             CreateUI(CreateEntity("UI"));
+
+            Camera.Position = new Vector2(Map.Width, Map.Height) * 0.5f;
         }
 
         public void CreateUI(Entity target)
@@ -83,14 +99,16 @@ namespace MTD.Scenes
 
         public override void Unload()
         {
-            base.Unload();
-
             UIScaleController.RemoveCanvas(Canvas);
             Canvas = null;
+
+            TilesShader = null; // Will be automatically disposed.
 
             var path = Main.Pathfinder;
             Main.Pathfinder = null;
             path.Dispose();
+
+            base.Unload();
         }
 
         public override void Update()
@@ -145,6 +163,8 @@ namespace MTD.Scenes
         private Vector2 startDrag;
         private Vector2 endDrag;
         private bool doWorldSelection;
+        private bool linecastOnDrag;
+        private readonly RaycastHit[] hits = new RaycastHit[100];
 
         private void DrawImGui()
         {
@@ -296,7 +316,7 @@ namespace MTD.Scenes
 
             #endregion
 
-            #region Entity Utils
+            #region Utils
 
             ImGui.BeginMainMenuBar();
             if (ImGui.BeginMenu("Entities"))
@@ -320,28 +340,55 @@ namespace MTD.Scenes
                 }
                 ImGui.EndMenu();
             }
+            if (ImGui.BeginMenu("Physics"))
+            {
+                if (ImGui.MenuItem("Linecast on drag", "Ctrl+L", ref linecastOnDrag))
+                {
+                    
+                }
+                ImGui.EndMenu();
+            }
             ImGui.EndMainMenuBar();
 
-            if (doWorldSelection && Input.LeftMouseButtonPressed)
+            if ((doWorldSelection || linecastOnDrag) && Input.LeftMouseButtonPressed)
             {
                 startDrag = Input.WorldMousePos;
             }
 
-            if (doWorldSelection && Input.LeftMouseButtonDown)
+            if ((doWorldSelection || linecastOnDrag) && Input.LeftMouseButtonDown)
             {
                 var c = Color.Green;
                 c.A = 70;
                 endDrag = Input.WorldMousePos;
-                Debug.DrawHollowRect(new Rectangle((int)startDrag.X, (int)startDrag.Y, (int)(endDrag.X - startDrag.X), (int)(endDrag.Y - startDrag.Y)), c);
+
+                if (doWorldSelection)
+                {
+                    Debug.DrawHollowRect(new Rectangle((int)startDrag.X, (int)startDrag.Y, (int)(endDrag.X - startDrag.X), (int)(endDrag.Y - startDrag.Y)), c);
+                }
+                else if (linecastOnDrag)
+                {
+                    Debug.DrawLine(startDrag, endDrag, c);
+                    int count = Physics.LinecastAll(startDrag, endDrag, hits);
+                    for (int i = 0; i < count; i++)
+                    {
+                        var hit = hits[i];
+                        Debug.DrawHollowBox(hit.Point, 3, Color.Red);
+                        Debug.DrawLine(hit.Point, hit.Point + hit.Normal * Tile.SIZE / 2, Color.Purple);
+                    }
+                }
             }
 
-            if (doWorldSelection && Input.LeftMouseButtonReleased)
+            if ((doWorldSelection || linecastOnDrag) && Input.LeftMouseButtonReleased)
             {
                 endDrag = Input.WorldMousePos;
-                var found = Physics.OverlapRectangle(new RectangleF(startDrag, endDrag - startDrag));
-                if (found != null && !found.Entity.IsNullOrDestroyed())
+
+                if (doWorldSelection)
                 {
-                    Core.GetGlobalManager<ImGuiManager>().StartInspectingEntity(found.Entity);
+                    var found = Physics.OverlapRectangle(new RectangleF(startDrag, endDrag - startDrag));
+                    if (found != null && !found.Entity.IsNullOrDestroyed())
+                    {
+                        Core.GetGlobalManager<ImGuiManager>().StartInspectingEntity(found.Entity);
+                    }
                 }
             }
 

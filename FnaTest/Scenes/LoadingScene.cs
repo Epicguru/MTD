@@ -82,7 +82,7 @@ namespace MTD.Scenes
             var ent = CreateEntity("LoadingIcon");
             var animator = ent.AddComponent(new SpriteAnimator());
 
-            var anim = Content.LoadSpriteAtlas("Content/UI/LoadingIcon.atlas").CreateAnimation("LoadingIcon", 24, 30, 2, new Vector2(0.5f, 0f));
+            var anim = Content.LoadSpriteAtlas("Content/[Atlas]UI/LoadingIcon.atlas").CreateAnimation("LoadingIcon", 24, 30, 2, new Vector2(0.5f, 0f));
 
             animator.AddAnimation("Spin", anim);
             animator.Play("Spin");

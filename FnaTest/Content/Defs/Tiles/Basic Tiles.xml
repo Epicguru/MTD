@@ -3,17 +3,17 @@
 
   <StoneTile parent="BaseTile">
     <Name>Stone</Name>
-    <Sprite>Tiles/Stone</Sprite>
+    <Sprite>Tiles/StoneTile</Sprite>
   </StoneTile>
 
   <DirtTile parent="BaseTile">
     <Name>Dirt</Name>
-    <Sprite>Tiles/Dirt</Sprite>
+    <Sprite>Tiles/DirtTile</Sprite>
   </DirtTile>
 
   <LadderTile parent="BaseTile">
     <Name>Ladder</Name>
-    <Sprite>Tiles/Ladder</Sprite>
+    <Sprite>Tiles/StoneTile</Sprite>
     <CanClimb>true</CanClimb>
   </LadderTile>
 

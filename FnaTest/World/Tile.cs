@@ -2,12 +2,38 @@
 using Microsoft.Xna.Framework.Graphics;
 using Nez;
 using System;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using Nez.Sprites;
 
 namespace MTD.World
 {
     public class Tile
     {
-        public const int SIZE = 16;
+        public const int SIZE = 64;
+
+        private static Vector4[] masks;
+        private static readonly Color[] uvColors = new Color[4];
+        private static byte lastMask;
+        internal static void LoadMasks(SpriteAtlas atlas)
+        {
+            Vector4 read(string name)
+            {
+                var rect = atlas.GetSprite($"Tiles/{name}").Uvs;
+                return new Vector4(rect.X, rect.Y, rect.Width, rect.Height);
+            }
+
+            masks = new Vector4[3];
+            int i = 0;
+            masks[i++] = read("FullMask");
+            masks[i++] = read("SlopeMask");
+            masks[i++] = read("TopCutMask");
+        }
+        internal static void StartDraw(EffectParameter maskParam, EffectParameter matrixParam)
+        {
+            maskParam.SetValue(Tile.masks);
+            matrixParam.SetValue(Map.Current?.Entity?.Scene?.Camera?.ViewProjectionMatrix ?? Matrix.Identity);
+        }
 
         public TileLayer Layer { get; internal set; }
         public string Name
@@ -60,6 +86,16 @@ namespace MTD.World
 
         }
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void MakeColors(byte maskIndex)
+        {
+            uvColors[0] = Color.Create(0, 0, 0, maskIndex);
+            uvColors[1] = Color.Create(255, 0, 0, maskIndex);
+            uvColors[2] = Color.Create(0, 255, 0, maskIndex);
+            uvColors[3] = Color.Create(255, 255, 0, maskIndex);
+            lastMask = maskIndex;
+        }
+
         /// <summary>
         /// Renders the tile to it's current position and state.
         /// </summary>
@@ -69,7 +105,11 @@ namespace MTD.World
             if (spr == null)
                 return;
 
-            b.Draw(spr, new Vector2(X * SIZE, Y * SIZE), this.Color, 0f, spr.Origin, 1f, SpriteEffects.None, depth);
+            byte mask = IsSolid ? (byte) 0 : (byte) 1;
+            if (lastMask != mask)
+                MakeColors(mask);
+            float customDepth = BitConverter.Int32BitsToSingle((int) Color.PackedValue);
+            b.Draw4Col(spr, new Vector2(X * SIZE, Y * SIZE), uvColors[0], uvColors[1], uvColors[2], uvColors[3], 0f, spr.Origin, 1f, SpriteEffects.None, customDepth);
         }
 
         /// <summary>

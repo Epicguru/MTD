@@ -9,7 +9,7 @@ namespace MTD.Scenes
         public static UICanvas Setup(Scene scene, SpriteAtlas atlas)
         {
             var ui = new UICanvas();
-            ui.SetRenderLayer(999);
+            ui.SetRenderLayer(Main.LAYER_UI);
             ui.IsFullScreen = true;
 
             var skin = Skin.CreateDefaultSkin();

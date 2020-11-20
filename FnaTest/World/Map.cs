@@ -2,6 +2,9 @@
 using Microsoft.Xna.Framework;
 using Nez;
 using System.Runtime.CompilerServices;
+using Microsoft.Xna.Framework.Graphics;
+using MTD.Scenes;
+using Nez.Textures;
 
 namespace MTD.World
 {
@@ -15,6 +18,8 @@ namespace MTD.World
         public TileLayer[] Layers { get; private set; }
         public readonly int WidthInTiles, HeightInTiles;
         public Point MouseTileCoordinates { get; private set; }
+
+        private EffectParameter tileShaderMaskParam, tileShaderMatrixParam;
 
         private Collider[] colliders;
         private Queue<(int, int, Collider)> collidersToAdd = new Queue<(int, int, Collider)>();
@@ -200,6 +205,8 @@ namespace MTD.World
         {
             base.OnAddedToEntity();
 
+            tileShaderMaskParam = GameScene.TilesShader.Parameters["masks"];
+            tileShaderMatrixParam = GameScene.TilesShader.Parameters["_viewProjectionMatrix"];
             DequeueColliders();
             Current = this;
         }
@@ -208,6 +215,7 @@ namespace MTD.World
         {
             base.OnRemovedFromEntity();
 
+            tileShaderMaskParam = null;
             Current = null;
         }
 
@@ -266,6 +274,8 @@ namespace MTD.World
 
         public override void Render(Batcher batcher, Camera camera)
         {
+            Tile.StartDraw(tileShaderMaskParam, tileShaderMatrixParam);
+
             for (int i = 0; i < Layers.Length; i++)
             {
                 var layer = Layers[i];

@@ -36,6 +36,9 @@ namespace MTD
 
     public class Main : Core
     {
+        public const int LAYER_UI = 999;
+        public const int LAYER_TILES = 10;
+
         public static DefDatabase Defs { get; private set; }
         public static SpriteAtlas Atlas { get; private set; }
         public static SpriteAtlas UIAtlas { get; private set; }
@@ -185,7 +188,7 @@ namespace MTD
 
         private void LoadEssentialContent()
         {
-            Font32 = Content.LoadBitmapFont("Content/Fonts/General30.fnt");
+            Font32 = Content.LoadBitmapFont("Content/Fonts/General32.fnt");
             FontTitle = Content.LoadBitmapFont("Content/Fonts/Title72.fnt");
         }
 
@@ -376,10 +379,6 @@ namespace MTD
             e.AddComponent(new BoxDrawer());
             e.Name = "FatOne";
 
-            //CreateEntity("Another").AddComponent(new SpriteRenderer(Content.Load<Texture2D>("Tiles/Dirt"))).Entity.Position = new Vector2(450, 500);
-
-            //CreateEntity("HAHA").AddComponent(new BoxDrawer()).Entity.Position = new Vector2(450, 550);
-
             // Create UI.
             SetupMenu();
             UIScaleController.RegisterCanvas(ui);
@@ -449,7 +448,7 @@ namespace MTD
                 var gs = new GameScene();
                 LoadingScene.LoadAndChangeScene(gs, () =>
                 {
-                    var map = new Map(200, 100);
+                    var map = new Map(1000, 200);
                     GameScene.GenerateLayer(map.Layers[0]);
                     map.PlaceAllColliders();
                     gs.Map = map;
