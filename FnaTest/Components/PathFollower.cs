@@ -190,7 +190,7 @@ namespace MTD.Components
             {
                 rx = Nez.Random.Range(CurrentTilePos.X - radius, CurrentTilePos.X + radius + 1);
                 ry = Nez.Random.Range(CurrentTilePos.Y - radius, CurrentTilePos.Y + radius + 1);
-            } while (!Map.Current.CanStand(rx, ry));
+            } while (Map.Current.CanStandAt(rx, ry));
 
             StartPath(new Point(rx, ry));
         }

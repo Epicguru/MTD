@@ -7,6 +7,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Nez;
 
 namespace MTD.World.Pathfinding
 {
@@ -82,7 +83,7 @@ namespace MTD.World.Pathfinding
             {
                 return PathResult.ERROR_START_IS_END;
             }
-            if (!Map.CanStand(end.X, end.Y))
+            if (!Map.CanStandAt(end.X, end.Y))
             {
                 return PathResult.ERROR_END_IS_UNWALKABLE;
             }
@@ -137,6 +138,8 @@ namespace MTD.World.Pathfinding
                     float newCost = currentCostSoFar + GetCost(current, n);
                     bool hasCostSoFar = costSoFar.TryGetValue(n, out float nCostSoFar);
 
+                    Debug.DrawHollowBox(pos, Tile.SIZE - 10, Color.Blue);
+
                     // If the node has never been explored, or the current path is shorter than a prevous route...
                     if (!hasCostSoFar || newCost < nCostSoFar)
                     {
@@ -185,70 +188,83 @@ namespace MTD.World.Pathfinding
 
             int x = node.X;
             int y = node.Y;
+            const int z = 0;
 
-            // Left
-            if (Map.CanStand(x - 1, y))
-            {
+            // Need to return a list of all tiles that can be moved to from the current tile.
+
+            Tile tSelf = Map.GetTile(x, y, z);
+
+            Tile tLeft = Map.GetTile(x - 1, y, z);
+            Tile tTopLeft = Map.GetTile(x - 1, y - 1, z);
+            Tile tTopTopLeft = Map.GetTile(x - 1, y - 2, z);
+            Tile tBotLeft = Map.GetTile(x - 1, y + 1, z);
+            Tile tBotBotLeft = Map.GetTile(x - 1, y + 2, z);
+
+            Tile tRight = Map.GetTile(x + 1, y, z);
+            Tile tTopRight = Map.GetTile(x + 1, y - 1, z);
+            Tile tTopTopRight = Map.GetTile(x + 1, y - 2, z);
+            Tile tBotRight = Map.GetTile(x + 1, y + 1, z);
+            Tile tBotBotRight = Map.GetTile(x + 1, y + 2, z);
+
+            Tile tTop = Map.GetTile(x, y - 1, z);
+            Tile tTopTop = Map.GetTile(x, y - 2, z);
+
+            Tile tBot = Map.GetTile(x, y + 1, z);
+            Tile tBotBot = Map.GetTile(x, y + 2, z);
+
+            // Left.
+            // Can move left if both left and top-left tiles are clear, and there is something to stand on below.
+            if (CanStandOn(tBotLeft) && CanStandIn(tLeft) && CanStandIn(tTopLeft))
                 near.Add(pool.Create(x - 1, y));
-            }
 
-            // Right
-            if (Map.CanStand(x + 1, y))
-            {
+            // Right.
+            if (CanStandOn(tBotRight) && CanStandIn(tRight) && CanStandIn(tTopRight))
                 near.Add(pool.Create(x + 1, y));
-            }
 
-            // Below
-            if (Map.CanStand(x, y + 1))
-            {
-                near.Add(pool.Create(x, y + 1));
-            }
-
-            // Above
-            if (Map.CanStand(x, y - 1))
-            {
+            // Straight up.
+            if (CanStandIn(tTopTop) && (CanClimb(tTop) || CanClimb(tSelf)))
                 near.Add(pool.Create(x, y - 1));
-            }
 
-#if DO_DIAGONALS
+            // Straight down.
+            if (CanClimb(tBot) || (CanStandOn(tBotBot) && CanStandIn(tBot)))
+                near.Add(pool.Create(x, y + 1));
 
-            // Below-Left. Can't have impassable tile to the left.
-            if (!Map.IsImpassable(x - 1, y))
-            {
-                if (Map.CanStand(x - 1, y + 1))
-                {
-                    near.Add(pool.Create(x - 1, y + 1));
-                }
-            }
+            // Diagonal - bottom left & right.
+            // Can move down-left if that spot can be stood on.
+            if(CanStandIn(tBotLeft) && CanStandIn(tLeft) && CanStandIn(tTopLeft) && (CanStandOn(tBotBotLeft) || CanStandIn(tBotLeft, true)))
+                near.Add(pool.Create(x - 1, y + 1));
 
-            // Below-Right. Can't have impassable tile to the right.
-            if (!Map.IsImpassable(x + 1, y))
-            {
-                if (Map.CanStand(x + 1, y + 1))
-                {
-                    near.Add(pool.Create(x + 1, y + 1));
-                }
-            }
+            if (CanStandIn(tBotRight) && CanStandIn(tRight) && CanStandIn(tTopRight) && (CanStandOn(tBotBotRight) || CanStandIn(tBotRight, true)))
+                near.Add(pool.Create(x + 1, y + 1));
 
-            // Above-Left. Can't have impassable tile above.
-            if (!Map.IsImpassable(x, y - 1))
-            {
-                if (Map.CanStand(x - 1, y - 1))
-                {
-                    near.Add(pool.Create(x - 1, y - 1));
-                }
-            }
+            // Diagonal - top left & right.
+            if (CanStandIn(tTopRight) && CanStandIn(tTopTopRight) && CanStandOn(tRight) && CanStandIn(tTopTop))
+                near.Add(pool.Create(x + 1, y - 1));
 
-            // Above-Right. Can't have impassable tile above.
-            if (!Map.IsImpassable(x, y - 1))
-            {
-                if (Map.CanStand(x + 1, y - 1))
-                {
-                    near.Add(pool.Create(x + 1, y - 1));
-                }
-            }
-#endif
+            if (CanStandIn(tTopLeft) && CanStandIn(tTopTopLeft) && CanStandOn(tLeft) && CanStandIn(tTopTop))
+                near.Add(pool.Create(x - 1, y - 1));
         }
+
+        /// <summary>
+        /// Can a pawn stand on top of this tile?
+        /// Air, ladder etc. will return false. Solid surfaces will return true.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool CanStandOn(Tile tile) => tile != null && tile.CanStandOn;
+
+        /// <summary>
+        /// Can a pawn stand with it's body occupying this tile?
+        /// Air, ladder etc. will return true. A solid wall will return false.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool CanStandIn(Tile tile, bool notAir = false) => notAir ? tile != null && tile.CanStandIn : tile == null || tile.CanStandIn;
+
+        /// <summary>
+        /// Can this tile be climbed? Ladders etc. can be climbed.
+        /// </summary>
+        /// <param name="tile"></param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool CanClimb(Tile tile) => tile != null && tile.Def.CanClimb;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private int Abs(int x)

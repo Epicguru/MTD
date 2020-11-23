@@ -13,7 +13,7 @@
 
   <LadderTile parent="BaseTile">
     <Name>Ladder</Name>
-    <Sprite>Tiles/StoneTile</Sprite>
+    <Sprite>Tiles/LadderTile</Sprite>
     <CanClimb>true</CanClimb>
   </LadderTile>
 

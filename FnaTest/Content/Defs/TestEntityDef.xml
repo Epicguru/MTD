@@ -36,6 +36,7 @@
 
       <li class="MTD.Entities.BoxColliderDef">
         <Size>(60, 120)</Size>
+        <LocalOffset>(0, -28)</LocalOffset>
       </li>
 
       <li class="MTD.Entities.HealthDef">

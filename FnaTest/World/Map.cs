@@ -55,45 +55,6 @@ namespace MTD.World
 
         private bool ShouldHaveCollider(Tile tile)
         {
-            if (tile == null || !tile.IsSolid)
-                return false;
-
-            int x = tile.X;
-            int y = tile.Y;
-            int d = tile.Layer.Depth;
-
-            var other = GetTile(x - 1, y, d);
-            if (other == null || !other.IsSolid)
-                return true;
-
-            other = GetTile(x - 1, y - 1, d);
-            if (other == null || !other.IsSolid)
-                return true;
-
-            other = GetTile(x, y - 1, d);
-            if (other == null || !other.IsSolid)
-                return true;
-
-            other = GetTile(x + 1, y - 1, d);
-            if (other == null || !other.IsSolid)
-                return true;
-
-            other = GetTile(x + 1, y, d);
-            if (other == null || !other.IsSolid)
-                return true;
-
-            other = GetTile(x + 1, y + 1, d);
-            if (other == null || !other.IsSolid)
-                return true;
-
-            other = GetTile(x, y + 1, d);
-            if (other == null || !other.IsSolid)
-                return true;
-
-            other = GetTile(x - 1, y + 1, d);
-            if (other == null || !other.IsSolid)
-                return true;
-
             return false;
         }
 
@@ -230,45 +191,14 @@ namespace MTD.World
             return x >= 0 && x < WidthInTiles && y >= 0 && y < HeightInTiles;
         }
 
-        /// <summary>
-        /// Can a pawn stand on top of the tile at this position?
-        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool CanStand(int ex, int ey)
+        public bool CanStandAt(int x, int y)
         {
-            if (!IsInBounds(ex, ey))
-                return false;
+            Tile above = GetTile(x, y - 1, 0);
+            Tile at = GetTile(x, y, 0);
+            Tile below = GetTile(x, y + 1, 0);
 
-            var tile = Layers[0].GetTileFast(ex, ey);
-            if (tile != null && !tile.Def.CanClimb)
-                return false; // Cannot walk into a solid tile that is not climbable.
-
-            if (tile == null)
-            {
-                if (!IsInBounds(ex, ey + 1))
-                    return false;
-                var below = Layers[0].GetTileFast(ex, ey + 1);
-                if (below == null)
-                    return false;
-            }
-
-            return true;
-        }
-
-        /// <summary>
-        /// Could a pawn walk through the tile at this position?
-        /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsImpassable(int x, int y)
-        {
-            if (!IsInBounds(x, y))
-                return true;
-
-            var tile = Layers[0].GetTileFast(x, y);
-            if (tile != null && !tile.Def.CanClimb)
-                return true;
-
-            return false;
+            return ((below != null && below.CanStandOn) || (at != null && at.CanStandIn)) && (at == null || at.CanStandIn) && (above == null || above.CanStandIn);
         }
 
         public override void Render(Batcher batcher, Camera camera)

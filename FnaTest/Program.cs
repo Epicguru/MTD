@@ -38,6 +38,7 @@ namespace MTD
     {
         public const int LAYER_UI = 999;
         public const int LAYER_TILES = 10;
+        public const int LAYER_LIGHT = 998;
 
         public static DefDatabase Defs { get; private set; }
         public static SpriteAtlas Atlas { get; private set; }

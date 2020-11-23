@@ -42,11 +42,20 @@ namespace MTD.World
                 return Def?.Name;
             }
         }
-        public bool IsSolid
+
+        public virtual bool CanStandOn
         {
             get
             {
-                return !Def.CanClimb;
+                return true;
+            }
+        }
+
+        public virtual bool CanStandIn
+        {
+            get
+            {
+                return Def.CanClimb;
             }
         }
 
@@ -104,7 +113,7 @@ namespace MTD.World
             if (spr == null)
                 return;
 
-            byte mask = IsSolid ? (byte) 0 : (byte) 1;
+            byte mask = 0;
             if (lastMask != mask)
                 MakeColors(mask);
 

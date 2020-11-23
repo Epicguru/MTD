@@ -1,15 +1,16 @@
 ﻿using ImGuiNET;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using MTD.Components;
 using MTD.Entities;
 using MTD.World;
 using MTD.World.Pathfinding;
 using Nez;
 using Nez.ImGuiTools;
-using Nez.Shadows;
 using System;
-using Microsoft.Xna.Framework.Graphics;
-using MTD.Components;
+using Nez.Sprites;
+using Nez.Textures;
 using Random = Nez.Random;
 
 namespace MTD.Scenes
@@ -45,18 +46,20 @@ namespace MTD.Scenes
         public UICanvas Canvas { get; private set; }
         public static Effect TilesShader;
 
+        private RenderLayerRenderer lightRenderer;
+        private RenderTexture lightRT;
         private Material tilesMat;
 
         public override void Initialize()
         {
             base.Initialize();
 
-
             var otherMat = new Material() {SamplerState = SamplerState.LinearClamp};
             tilesMat = new Material() {SamplerState = SamplerState.LinearClamp, Effect=TilesShader};
 
-            AddRenderer(new RenderLayerExcludeRenderer(0, Main.LAYER_UI, Main.LAYER_TILES){Material=otherMat}); // For world objects.
+            AddRenderer(new RenderLayerExcludeRenderer(0, Main.LAYER_UI, Main.LAYER_TILES, Main.LAYER_LIGHT){Material=otherMat}); // For world objects.
             AddRenderer(new RenderLayerRenderer(-100, Main.LAYER_TILES){Material=tilesMat}); // Only renders map, using custom shader.
+            AddRenderer(lightRenderer = new RenderLayerRenderer(99, Main.LAYER_LIGHT)); // Light layer.
             AddRenderer(new ScreenSpaceRenderer(100, Main.LAYER_UI)); // For UI.
         }
 
@@ -84,9 +87,20 @@ namespace MTD.Scenes
             TilesShader = Content.LoadEffect("Shaders/TileShader.fxb");
             tilesMat.Effect = TilesShader;
 
+            lightRT = new RenderTexture(Screen.Width, Screen.Height);
+            lightRenderer.RenderTexture = lightRT;
+            lightRT.ResizeBehavior = RenderTexture.RenderTextureResizeBehavior.SizeToSceneRenderTarget;
+
+            AddPostProcessor(new LightPP(0, lightRT));
+
             Tile.LoadMasks(Main.Atlas);
 
             CreateUI(CreateEntity("UI"));
+
+            var lightE = CreateEntity("Light");
+            lightE.AddComponent(new SpriteRenderer(Main.Atlas.GetSprite("Tiles/FullMask")));
+            lightE.LocalPosition = new Vector2(28000, 8000);
+            lightE.Scale = new Vector2(20, 20);
 
             Camera.Position = new Vector2(Map.Width, Map.Height) * 0.5f;
         }
@@ -104,6 +118,13 @@ namespace MTD.Scenes
             Canvas = null;
 
             TilesShader = null; // Will be automatically disposed.
+
+            if (lightRT != null)
+            {
+                lightRT.Dispose();
+                lightRT = null;
+            }
+            lightRenderer = null;
 
             var path = Main.Pathfinder;
             Main.Pathfinder = null;
@@ -314,6 +335,7 @@ namespace MTD.Scenes
                 }
             }
 
+            ImGui.Text($"Light RT: {(lightRT == null ? "null" : $"{lightRT.RenderTarget.Width}x{lightRT.RenderTarget.Height}")}");
             ImGui.End();
 
             #endregion

@@ -189,7 +189,7 @@ namespace MTD.Entities
         }
     }
 
-    public class BoxColliderDef : ComponentDef
+    public class BoxColliderDef : ColliderDef
     {
         public override Type Class => typeof(BoxCollider);
 
