@@ -9,6 +9,7 @@ using Nez.ImGuiTools;
 using Nez.Shadows;
 using System;
 using Microsoft.Xna.Framework.Graphics;
+using MTD.Components;
 using Random = Nez.Random;
 
 namespace MTD.Scenes
@@ -163,6 +164,7 @@ namespace MTD.Scenes
         private Vector2 startDrag;
         private Vector2 endDrag;
         private bool doWorldSelection;
+        private bool doSpawnBullets;
         private bool linecastOnDrag;
         private readonly RaycastHit[] hits = new RaycastHit[100];
 
@@ -325,6 +327,10 @@ namespace MTD.Scenes
                 {
                     
                 }
+                if (ImGui.MenuItem("Spawn Bullets", "Ctrl+B", ref doSpawnBullets))
+                {
+                    
+                }
                 ImGui.EndMenu();
             }
             if (ImGui.BeginMenu("UI"))
@@ -349,6 +355,14 @@ namespace MTD.Scenes
                 ImGui.EndMenu();
             }
             ImGui.EndMainMenuBar();
+
+            if (doSpawnBullets && Input.LeftMouseButtonPressed)
+            {
+                float angle = Random.NextAngle();
+                Vector2 vel = new Vector2(MathF.Cos(angle), MathF.Sin(angle)) * Tile.SIZE * 16;
+                var ent = CreateEntity("Bullet", Input.WorldMousePos);
+                ent.AddComponent(new Bullet(){Velocity = vel});
+            }
 
             if ((doWorldSelection || linecastOnDrag) && Input.LeftMouseButtonPressed)
             {

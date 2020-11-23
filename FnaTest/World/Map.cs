@@ -1,10 +1,9 @@
-﻿using System.Collections.Generic;
-using Microsoft.Xna.Framework;
-using Nez;
-using System.Runtime.CompilerServices;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MTD.Scenes;
-using Nez.Textures;
+using Nez;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace MTD.World
 {

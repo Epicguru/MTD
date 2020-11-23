@@ -1,10 +1,9 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Nez;
-using System;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using Nez.Sprites;
+using System;
+using System.Runtime.CompilerServices;
 
 namespace MTD.World
 {
@@ -99,7 +98,7 @@ namespace MTD.World
         /// <summary>
         /// Renders the tile to it's current position and state.
         /// </summary>
-        public virtual void Draw(Batcher b, Camera c, float depth)
+        public virtual void Draw(Batcher batcher, Camera c, float depth)
         {
             var spr = Def.Sprite;
             if (spr == null)
@@ -108,8 +107,8 @@ namespace MTD.World
             byte mask = IsSolid ? (byte) 0 : (byte) 1;
             if (lastMask != mask)
                 MakeColors(mask);
-            float customDepth = BitConverter.Int32BitsToSingle((int) Color.PackedValue);
-            b.Draw4Col(spr, new Vector2(X * SIZE, Y * SIZE), uvColors[0], uvColors[1], uvColors[2], uvColors[3], 0f, spr.Origin, 1f, SpriteEffects.None, customDepth);
+
+            batcher.Draw4Col(spr, new Vector2(X * SIZE, Y * SIZE), uvColors[0], uvColors[1], uvColors[2], uvColors[3], 0f, spr.Origin, 1f, SpriteEffects.None, depth);
         }
 
         /// <summary>

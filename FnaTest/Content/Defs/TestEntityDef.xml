@@ -20,22 +20,14 @@
 
   </TestEntityDef>
 
-  <OtherEntityDef parent="TestEntityDef">
-    <Name>Something cool</Name>
-    <Components>
-      <li class="MTD.Entities.HealthDef">
-        <MaxHealth>69</MaxHealth>
-      </li>
-    </Components>
-  </OtherEntityDef>
-
   <PathFollowerDef parent="EntityDef">
     <Name>Path Follower</Name>
 
     <Components>
 
       <li class="MTD.Entities.SpriteRendererDef">
-        <Sprite>Tiles/Human_F</Sprite>
+        <Sprite>Pawns/Human/DevMale</Sprite>
+        <OriginNormalized>(0.5, 0.75)</OriginNormalized>
       </li>
 
       <li class="MTD.Entities.PathFollowerDef">
@@ -43,7 +35,11 @@
       </li>
 
       <li class="MTD.Entities.BoxColliderDef">
-        <Size>(10, 16)</Size>
+        <Size>(60, 120)</Size>
+      </li>
+
+      <li class="MTD.Entities.HealthDef">
+        <MaxHealth>100</MaxHealth>
       </li>
 
     </Components>

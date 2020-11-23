@@ -103,6 +103,7 @@ namespace MTD.Entities
 
         public Sprite Sprite;
         public bool FlipX, FlipY;
+        public Vector2 OriginNormalized = new Vector2(-1, -1);
 
         public override Component Create()
         {
@@ -110,7 +111,14 @@ namespace MTD.Entities
             {
                 FlipX = FlipX,
                 FlipY = FlipY
+
             };
+            if (OriginNormalized.X != -1 && Sprite != null)
+            {
+                float x = OriginNormalized.X;
+                float y = OriginNormalized.Y;
+                comp.Origin = new Vector2(x * Sprite.SourceRect.Width, y * Sprite.SourceRect.Height);
+            }
             return comp;
         }
     }

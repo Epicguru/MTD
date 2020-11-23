@@ -15,25 +15,14 @@ struct VertexShaderOutput
 	float4 Position : POSITION0;
 	float2 TexCoord : TEXCOORD0;
 	float4 Color : COLOR0;
-  float4 Tint : COLOR1;
+	float4 Tint : COLOR1;
 };
-
-inline float4 ColorFromFloat(float f)
-{
-  // uint temp = 897123;
-  // float r = (temp & 0xf000)/255.0;
-  // float g = (temp & 0x0f00)/255.0;
-  // float b = (temp & 0x00f0)/255.0;
-  // float a = (temp & 0x000f)/255.0;
-  //return float4(r, g, b, a);
-  return float4(1, 0, 0, 1);
-}
 
 VertexShaderOutput Vert(VertexShaderInput input)
 {
 	VertexShaderOutput output;
 
-  output.Tint = ColorFromFloat(input.Position.z); // The tint has been packed into the position depth, because the (real) depth is always 0.
+  output.Tint = float4(1, 1, 1, 1);
   input.Position.z = 0; // Force depth to zero.
 	output.Position = mul(input.Position, _viewProjectionMatrix);
 	output.TexCoord = input.TexCoord;

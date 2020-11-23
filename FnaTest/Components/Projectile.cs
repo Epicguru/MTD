@@ -3,7 +3,7 @@ using Nez;
 
 namespace MTD.Components
 {
-    public class Projectile : Component, IUpdatable
+    public abstract class Projectile : RenderableComponent, IUpdatable
     {
         public Vector2 Velocity;
 
