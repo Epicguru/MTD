@@ -231,17 +231,21 @@ namespace MTD.World.Pathfinding
 
             // Diagonal - bottom left & right.
             // Can move down-left if that spot can be stood on.
-            if(CanStandIn(tBotLeft) && CanStandIn(tLeft) && CanStandIn(tTopLeft) && (CanStandOn(tBotBotLeft) || CanStandIn(tBotLeft, true)))
+            // Down-left
+            if(CanStand(x - 1, y + 1) && (CanStandIn(tTopLeft) || IsSlope(tTopLeft, 1) || IsSlope(tBot, 3)))
                 near.Add(pool.Create(x - 1, y + 1));
 
-            if (CanStandIn(tBotRight) && CanStandIn(tRight) && CanStandIn(tTopRight) && (CanStandOn(tBotBotRight) || CanStandIn(tBotRight, true)))
+            // Down-right
+            if (CanStand(x + 1, y + 1) && (CanStandIn(tTopRight) || IsSlope(tTopRight, 2) || IsSlope(tBot, 4)))
                 near.Add(pool.Create(x + 1, y + 1));
 
             // Diagonal - top left & right.
-            if (CanStandIn(tTopRight) && CanStandIn(tTopTopRight) && CanStandOn(tRight) && CanStandIn(tTopTop))
+            // Up-right
+            if (CanStand(x + 1, y - 1) && (CanStandIn(tTopTop) || IsSlope(tTopTop, 1) || IsSlope(tRight, 3)))
                 near.Add(pool.Create(x + 1, y - 1));
 
-            if (CanStandIn(tTopLeft) && CanStandIn(tTopTopLeft) && CanStandOn(tLeft) && CanStandIn(tTopTop))
+            // Up-left
+            if (CanStand(x - 1, y - 1) && (CanStandIn(tTopTop) || IsSlope(tTopTop, 2) || IsSlope(tLeft, 4)))
                 near.Add(pool.Create(x - 1, y - 1));
         }
 
@@ -261,6 +265,9 @@ namespace MTD.World.Pathfinding
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool CanStand(int x, int y) => Map.CanStandAt(x, y);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool IsSlope(Tile tile, byte slope) => tile != null && tile.SlopeIndex == slope;
 
         /// <summary>
         /// Can this tile be climbed? Ladders etc. can be climbed.

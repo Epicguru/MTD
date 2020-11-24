@@ -89,7 +89,7 @@ namespace MTD.World
         {
             get
             {
-                return !Def.CanClimb;
+                return !Def.CanClimb || SlopeIndex != 0;
             }
         }
         public Collider Collider

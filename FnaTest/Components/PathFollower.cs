@@ -34,6 +34,59 @@ namespace MTD.Components
 
         private List<Point> currentPath;
 
+        private float GetSlopeLerp()
+        {
+            Tile belowCurrent = Map.Current.GetTile(CurrentTilePos.X, CurrentTilePos.Y + 1, 0);
+            Tile belowNext = Map.Current.GetTile(NextTilePos.X, NextTilePos.Y + 1, 0);
+            float lerp = LerpToNextTile;
+
+            bool currIsSlope = belowCurrent != null && belowCurrent.SlopeIndex >= 3;
+            if (CurrentTilePos == NextTilePos)
+                return currIsSlope ? 1f : 0f;
+
+            bool nextIsSlope = belowNext != null && belowNext.SlopeIndex >= 3;
+            bool nextIsSlopeDown = nextIsSlope && (NextTilePos.X > CurrentTilePos.X ? belowNext.SlopeIndex == 4 : belowNext.SlopeIndex == 3);
+            bool currIsSlopeDown = currIsSlope && (NextTilePos.X > CurrentTilePos.X ? belowCurrent.SlopeIndex == 4 : belowCurrent.SlopeIndex == 3);
+            Debug.DrawText($"{lerp * 100f:F0}%", Entity.Position + new Vector2(32, 0), Color.Red, scale: 3);
+
+            if (currIsSlope)
+            {
+                if (currIsSlopeDown)
+                {
+                    if (lerp <= 0.5f || nextIsSlope)
+                        return 1f;
+                }
+                else
+                {
+                    if (nextIsSlope)
+                        return 1f;
+                    if (lerp < 0.5f)
+                        return 1f - lerp * 2f;
+                    return 0f;
+                }
+
+                return 1f - (lerp - 0.5f) * 2f;
+            }
+
+            if (nextIsSlope)
+            {
+                if (nextIsSlopeDown)
+                {
+                    if (lerp < 0.5f)
+                        return 0f;
+                    return (lerp - 0.5f) * 2f;
+                }
+                else
+                {
+                    if (lerp < 0.5f)
+                        return lerp * 2f;
+                    return 1f;
+                }
+            }
+
+            return 0f;
+        }
+
         public void Update()
         {
             if (Input.RightMouseButtonPressed)
@@ -101,18 +154,14 @@ namespace MTD.Components
                 if (jump)
                     visualPos.Y -= Mathf.Sin(MathF.PI * LerpToNextTile) * Tile.SIZE * 0.5f;
 
-                bool overSlope = true;
-                if (overSlope)
-                    visualPos.Y += Tile.SIZE * 0.5f;
+                visualPos.Y += Tile.SIZE * 0.5f * GetSlopeLerp();
 
                 Entity.Position = visualPos;
             }
             else
             {
                 var visualPos = currentTileWorldPos;
-                bool overSlope = true;
-                if (overSlope)
-                    visualPos.Y += Tile.SIZE * 0.5f;
+                visualPos.Y += Tile.SIZE * 0.5f * GetSlopeLerp();
                 Entity.Position = visualPos;
             }
 
@@ -240,10 +289,10 @@ namespace MTD.Components
             base.DebugRender(batcher);
 
             var currentTileWorldPos = Map.Current.TileToWorldPosition(CurrentTilePos);
-            var nextTileWorldPos = Map.Current.TileToWorldPosition(CurrentTilePos);
+            var nextTileWorldPos = Map.Current.TileToWorldPosition(NextTilePos);
 
-            batcher.DrawCircle(currentTileWorldPos, 1f, Color.Red, 2, 16);
-            batcher.DrawCircle(nextTileWorldPos, 0.6f, Color.Green, 2, 14);
+            batcher.DrawCircle(currentTileWorldPos, 26f, Color.Red, 2, 16);
+            batcher.DrawCircle(nextTileWorldPos, 26f, Color.Green, 2, 14);
 
             if (currentPath != null)
             {
