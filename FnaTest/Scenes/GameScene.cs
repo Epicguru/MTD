@@ -9,6 +9,7 @@ using MTD.World.Pathfinding;
 using Nez;
 using Nez.ImGuiTools;
 using System;
+using MTD.World.Light;
 using Nez.Sprites;
 using Nez.Textures;
 using Random = Nez.Random;
@@ -42,13 +43,24 @@ namespace MTD.Scenes
             }
         }
 
-        public Map Map { get; internal set; }
-        public UICanvas Canvas { get; private set; }
         public static Effect TilesShader;
 
-        private RenderLayerRenderer lightRenderer;
-        private RenderTexture lightRT;
+        public Map Map { get; internal set; }
+        public UICanvas Canvas { get; private set; }
+        public SkyLight SkyLight
+        {
+            get
+            {
+                return skyLightComp?.SL;
+            }
+        }
+        public LightPP LightPostProcessor { get; private set; }
+        public RenderLayerRenderer LightRenderer { get; private set; }
+        public LightManager LightManager { get; private set; }
+
+        private SkyLightComp skyLightComp;
         private Material tilesMat;
+        private Light light;
 
         public override void Initialize()
         {
@@ -57,9 +69,12 @@ namespace MTD.Scenes
             var otherMat = new Material() {SamplerState = SamplerState.LinearClamp};
             tilesMat = new Material() {SamplerState = SamplerState.LinearClamp, Effect=TilesShader};
 
+            base.ClearColor = Color.CornflowerBlue;
+            base.ClearColor.A = 0;
+
             AddRenderer(new RenderLayerExcludeRenderer(0, Main.LAYER_UI, Main.LAYER_TILES, Main.LAYER_LIGHT){Material=otherMat}); // For world objects.
             AddRenderer(new RenderLayerRenderer(-100, Main.LAYER_TILES){Material=tilesMat}); // Only renders map, using custom shader.
-            AddRenderer(lightRenderer = new RenderLayerRenderer(99, Main.LAYER_LIGHT)); // Light layer.
+            AddRenderer(LightRenderer = new RenderLayerRenderer(99, Main.LAYER_LIGHT){RenderTargetClearColor = new Color(0, 0, 0, 255)}); // Light layer.
             AddRenderer(new ScreenSpaceRenderer(100, Main.LAYER_UI)); // For UI.
         }
 
@@ -87,20 +102,17 @@ namespace MTD.Scenes
             TilesShader = Content.LoadEffect("Shaders/TileShader.fxb");
             tilesMat.Effect = TilesShader;
 
-            lightRT = new RenderTexture(Screen.Width, Screen.Height);
-            lightRenderer.RenderTexture = lightRT;
-            lightRT.ResizeBehavior = RenderTexture.RenderTextureResizeBehavior.SizeToSceneRenderTarget;
+            LightPostProcessor = AddPostProcessor(new LightPP(0));
+            LightRenderer.RenderTexture = LightPostProcessor.GetRenderTexture();
 
-            AddPostProcessor(new LightPP(0, lightRT));
+            skyLightComp = CreateEntity("SkyLight").AddComponent(new SkyLightComp(Map.WidthInTiles));
+            SkyLight.Start(); // Starts running thread.
+
+            LightManager = CreateEntity("Light manager").AddComponent(new LightManager());
 
             Tile.LoadMasks(Main.Atlas);
 
             CreateUI(CreateEntity("UI"));
-
-            var lightE = CreateEntity("Light");
-            lightE.AddComponent(new SpriteRenderer(Main.Atlas.GetSprite("Tiles/FullMask")));
-            lightE.LocalPosition = new Vector2(28000, 8000);
-            lightE.Scale = new Vector2(20, 20);
 
             Camera.Position = new Vector2(Map.Width, Map.Height) * 0.5f;
         }
@@ -114,21 +126,26 @@ namespace MTD.Scenes
 
         public override void Unload()
         {
-            UIScaleController.RemoveCanvas(Canvas);
-            Canvas = null;
+            // Stop running skylight before anything else, as this depends on map.
+            skyLightComp.Dispose();
+            skyLightComp = null;
 
-            TilesShader = null; // Will be automatically disposed.
-
-            if (lightRT != null)
-            {
-                lightRT.Dispose();
-                lightRT = null;
-            }
-            lightRenderer = null;
+            LightManager.Dispose();
+            LightManager = null;
 
             var path = Main.Pathfinder;
             Main.Pathfinder = null;
             path.Dispose();
+
+            UIScaleController.RemoveCanvas(Canvas);
+            Canvas = null;
+
+            TilesShader = null; // Will be automatically disposed.
+            LightRenderer = null;
+            LightPostProcessor = null;
+            LightRenderer = null;
+
+            // TODO unload/dispose world.
 
             base.Unload();
         }
@@ -169,6 +186,17 @@ namespace MTD.Scenes
             }
 
             base.Update();
+
+            if (light == null)
+            {
+                light = new SpreadLight();
+                LightManager.AddLight(light);
+            }
+            light.Position = Input.WorldMousePos;
+            light.Color = Color.Red;
+            (light as SpreadLight).Radius = 30;
+            light.Recalculate();
+            LightRenderer.Material.BlendState = BlendState.NonPremultiplied;
 
             Main.Pathfinder?.Update();
         }
@@ -335,7 +363,7 @@ namespace MTD.Scenes
                 }
             }
 
-            ImGui.Text($"Light RT: {(lightRT == null ? "null" : $"{lightRT.RenderTarget.Width}x{lightRT.RenderTarget.Height}")}");
+            ImGui.Text($"GPU: {Core.GraphicsDevice?.Adapter?.DeviceName ?? "null"}");
             ImGui.End();
 
             #endregion

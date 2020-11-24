@@ -92,6 +92,7 @@ namespace MTD.World.Pathfinding
                 calculators[i] = calc;
 
                 var thread = new Thread(ThreadRun);
+                thread.Name = $"Pathfinding thread #{i}";
                 thread.Priority = ThreadPriority.AboveNormal;
                 threads[i] = thread;
 

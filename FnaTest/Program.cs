@@ -75,6 +75,15 @@ namespace MTD
             base.OnExiting(sender, args);
 
             Pathfinder?.Dispose();
+
+            try
+            {
+                Scene?.Unload();
+            }
+            catch (Exception e)
+            {
+                Debug.Error(e.ToString());
+            }
         }
 
         private LoadingScene CreateLoadCoreAssetsScene()
@@ -235,6 +244,37 @@ namespace MTD
             }
             ListPool<Entity>.Free(list);
             DebugConsole.Instance.Log("Cleared entities.");
+        }
+
+        [Command("light", "Toggles light on or off.")]
+        private static void ToggleLight()
+        {
+            var gs = Scene as GameScene;
+            if (gs == null)
+                return;
+
+            gs.LightPostProcessor.Enabled = !gs.LightPostProcessor.Enabled;
+        }
+
+        [Command("light-color", "Sets light ambient color.")]
+        private static void LightColor(byte r, byte g, byte b)
+        {
+            var gs = Scene as GameScene;
+            if (gs == null)
+                return;
+
+            Color c = Color.Create(r, g, b, 0);
+            gs.LightRenderer.RenderTargetClearColor = c;
+        }
+
+        [Command("light-debug", "Sets light ambient color.")]
+        private static void LightDebug()
+        {
+            var gs = Scene as GameScene;
+            if (gs == null)
+                return;
+
+            gs.LightPostProcessor.DoDebugInspect = !gs.LightPostProcessor.DoDebugInspect;
         }
     }
 

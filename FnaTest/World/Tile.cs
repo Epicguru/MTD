@@ -59,6 +59,14 @@ namespace MTD.World
             }
         }
 
+        public virtual bool BlocksLight
+        {
+            get
+            {
+                return !Def.CanClimb;
+            }
+        }
+
         public Collider Collider
         {
             get
