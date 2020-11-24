@@ -1,5 +1,5 @@
 sampler s0; // The light texture.
-float4 masks[3]; // The uv's of all masks within the atlas.
+float4 masks[5]; // The uv's of all masks within the atlas.
 
 float4x4 _viewProjectionMatrix; // camera view-proj matrix
 
@@ -22,7 +22,7 @@ VertexShaderOutput Vert(VertexShaderInput input)
 {
 	VertexShaderOutput output;
 
-  output.Tint = float4(1, 1, 1, 1);
+  output.Tint = float4(input.Position.z, input.Position.z, input.Position.z, 1);
   input.Position.z = 0; // Force depth to zero.
 	output.Position = mul(input.Position, _viewProjectionMatrix);
 	output.TexCoord = input.TexCoord;

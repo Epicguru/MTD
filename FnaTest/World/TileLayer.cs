@@ -11,14 +11,16 @@ namespace MTD.World
         public readonly int WidthInTiles, HeightInTiles, Depth;
         public Map Map { get; internal set; }
         public int RenderedTileCount { get; private set; }
+        public readonly float TileDarkness;
 
         private Tile[] tiles;
 
-        public TileLayer(int tileWidth, int tileHeight, int depth)
+        public TileLayer(int tileWidth, int tileHeight, int depth, float darkness)
         {
             WidthInTiles = tileWidth;
             HeightInTiles = tileHeight;
             Depth = depth;
+            TileDarkness = darkness;
 
             tiles = new Tile[WidthInTiles * HeightInTiles];
         }
@@ -111,7 +113,7 @@ namespace MTD.World
                 for (int y = sy; y < ey; y++)
                 {
                     var tile = GetTileFast(x, y);
-                    tile?.Draw(batcher, camera, depth);
+                    tile?.Draw(batcher, camera);
                 }
             }
 

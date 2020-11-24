@@ -28,8 +28,9 @@ namespace MTD.World
             WidthInTiles = width;
             HeightInTiles = height;
 
-            Layers = new TileLayer[1];
-            Layers[0] = new TileLayer(width, height, 0) { Map = this };
+            Layers = new TileLayer[2];
+            Layers[0] = new TileLayer(width, height, 0, 1f) { Map = this };
+            Layers[1] = new TileLayer(width, height, 1, 0.4f) { Map = this };
 
             colliders = new Collider[width * height];
         }
@@ -141,6 +142,30 @@ namespace MTD.World
             return Layers[z].GetTile(x, y);
         }
 
+        public void AutoSlope(int x, int y, int z)
+        {
+            var tile = GetTile(x, y, z);
+            if (tile == null)
+                return;
+
+            bool left = tile.AutoSlopeWith(GetTile(x - 1, y, z));
+            bool right = tile.AutoSlopeWith(GetTile(x + 1, y, z));
+            bool up = tile.AutoSlopeWith(GetTile(x, y - 1, z));
+            bool down = tile.AutoSlopeWith(GetTile(x, y + 1, z));
+
+            byte slope = 0;
+            if (left && up)
+                slope = 1;
+            else if (up && right)
+                slope = 2;
+            else if (right && down)
+                slope = 3;
+            else if (down && left)
+                slope = 4;
+
+            tile.SlopeIndex = slope;
+        }
+
         public void Update()
         {
             MouseTileCoordinates = WorldToTileCoordinates(Input.WorldMousePos);
@@ -198,14 +223,26 @@ namespace MTD.World
             Tile at = GetTile(x, y, 0);
             Tile below = GetTile(x, y + 1, 0);
 
-            return ((below != null && below.CanStandOn) || (at != null && at.CanStandIn)) && (at == null || at.CanStandIn) && (above == null || above.CanStandIn);
+            bool basic = ((below != null && below.CanStandOn) || (at != null && at.CanStandIn)) && (at == null || at.CanStandIn) && (above == null || above.CanStandIn);
+            if (basic)
+                return true;
+
+            // Check for a double slope situaition.
+            if (below == null || above == null)
+                return false;
+            if (below.SlopeIndex == 3 && above.SlopeIndex == 1)
+                return true;
+            if (below.SlopeIndex == 4 && above.SlopeIndex == 2)
+                return true;
+
+            return false;
         }
 
         public override void Render(Batcher batcher, Camera camera)
         {
             Tile.StartDraw(tileShaderMaskParam, tileShaderMatrixParam);
 
-            for (int i = 0; i < Layers.Length; i++)
+            for (int i = Layers.Length - 1; i >= 0; i--)
             {
                 var layer = Layers[i];
                 layer.Render(batcher, camera, (float)i / Layers.Length);

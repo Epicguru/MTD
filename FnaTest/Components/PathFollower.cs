@@ -87,13 +87,33 @@ namespace MTD.Components
                     nextTileWorldPos = Map.Current.TileToWorldPosition(CurrentTilePos);
                 }
                 var visualPos = Vector2.Lerp(currentTileWorldPos, nextTileWorldPos, LerpToNextTile);
+                bool jump = false;
                 if (isDiagonal)
+                {
+                    // Only jump if there isnt a slope to walk up or down.
+                    bool movingRight = NextTilePos.X > CurrentTilePos.X;
+                    bool movingUp = NextTilePos.Y < CurrentTilePos.Y;
+                    byte targetSlope = (movingRight) ? (byte)(movingUp ? 3 : 4) : (byte)(movingUp ? 4 : 3);
+                    Tile jumpingOn = Map.Current.GetTile(CurrentTilePos.X + (movingUp ? (movingRight ? 1 : -1) : 0), movingUp ? CurrentTilePos.Y : (CurrentTilePos.Y + 1), 0);
+                    if (jumpingOn == null || jumpingOn.SlopeIndex != targetSlope)
+                        jump = true;
+                }
+                if (jump)
                     visualPos.Y -= Mathf.Sin(MathF.PI * LerpToNextTile) * Tile.SIZE * 0.5f;
+
+                bool overSlope = true;
+                if (overSlope)
+                    visualPos.Y += Tile.SIZE * 0.5f;
+
                 Entity.Position = visualPos;
             }
             else
             {
-                Entity.Position = currentTileWorldPos;
+                var visualPos = currentTileWorldPos;
+                bool overSlope = true;
+                if (overSlope)
+                    visualPos.Y += Tile.SIZE * 0.5f;
+                Entity.Position = visualPos;
             }
 
             // Face entity towards direction of movement.

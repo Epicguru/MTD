@@ -1,5 +1,4 @@
 ﻿using JDef;
-using Microsoft.Xna.Framework;
 using Nez;
 using Nez.Textures;
 using System;
@@ -47,12 +46,6 @@ namespace MTD.World
         /// The default sprite of the tile.
         /// </summary>
         public Sprite Sprite;
-
-        /// <summary>
-        /// The default color of the tile.
-        /// Can be changed at runtime.
-        /// </summary>
-        public Color Color;
 
         /// <summary>
         /// The tick interval of the tile.

@@ -18,10 +18,10 @@ namespace MTD.Scenes
 {
     public class GameScene : Scene
     {
-        public static void GenerateLayer(TileLayer layer)
+        public static void GenerateMap(Map map)
         {
-            int w = layer.WidthInTiles;
-            int h = layer.HeightInTiles;
+            int w = map.WidthInTiles;
+            int h = map.HeightInTiles;
 
             var dirt = Main.Defs.GetNamed<TileDef>("DirtTile");
             var stone = Main.Defs.GetNamed<TileDef>("StoneTile");
@@ -33,9 +33,16 @@ namespace MTD.Scenes
                 for (int y = 0; y < h; y++)
                 {
                     if (y >= h - height / 2)
-                        layer.SetTile(x, y, stone, true);
+                    {
+                        map.SetTile(x, y, 0, stone, true);
+                        map.SetTile(x, y, 1, stone, true);
+                    }
                     else if (y >= h - height)
-                        layer.SetTile(x, y, dirt, true);
+                    {
+                        map.SetTile(x, y, 0, dirt, true);
+                        if(y > h - height)
+                            map.SetTile(x, y, 1, dirt, true);
+                    }
 
                 }
                 if (Random.Chance(0.3f))
@@ -184,6 +191,16 @@ namespace MTD.Scenes
                 var pos = Map.MouseTileCoordinates;
                 Map.SetTile(pos.X, pos.Y, 0, TileDef.Get("LadderTile"));
             }
+            if (Input.IsKeyDown(Keys.B))
+            {
+                var pos = Map.MouseTileCoordinates;
+                Map.SetTile(pos.X, pos.Y, 0, TileDef.Get("StoneTile"));
+            }
+            if (Input.IsKeyDown(Keys.LeftAlt))
+            {
+                var pos = Map.MouseTileCoordinates;
+                Map.AutoSlope(pos.X, pos.Y, 0);
+            }
 
             base.Update();
 
@@ -192,8 +209,9 @@ namespace MTD.Scenes
                 light = new SpreadLight();
                 LightManager.AddLight(light);
             }
-            light.Position = Input.WorldMousePos;
-            light.Color = Color.Red;
+            if(Input.MiddleMouseButtonDown)
+                light.Position = Input.WorldMousePos;
+            light.Color = Color.Beige;
             (light as SpreadLight).Radius = 30;
             light.Recalculate();
             LightRenderer.Material.BlendState = BlendState.NonPremultiplied;

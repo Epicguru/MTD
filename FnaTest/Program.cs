@@ -40,6 +40,8 @@ namespace MTD
         public const int LAYER_TILES = 10;
         public const int LAYER_LIGHT = 998;
 
+        public static bool DebugStandableTiles = false;
+
         public static DefDatabase Defs { get; private set; }
         public static SpriteAtlas Atlas { get; private set; }
         public static SpriteAtlas UIAtlas { get; private set; }
@@ -276,6 +278,12 @@ namespace MTD
 
             gs.LightPostProcessor.DoDebugInspect = !gs.LightPostProcessor.DoDebugInspect;
         }
+
+        [Command("toggle-stand-debug", "Toggles the standable tiles debug overlay.")]
+        private static void ToggleStandableDebug()
+        {
+            DebugStandableTiles = !DebugStandableTiles;
+        }
     }
 
     public class UIScaleController : GlobalManager
@@ -490,7 +498,7 @@ namespace MTD
                 LoadingScene.LoadAndChangeScene(gs, () =>
                 {
                     var map = new Map(1000, 200);
-                    GameScene.GenerateLayer(map.Layers[0]);
+                    GameScene.GenerateMap(map);
                     map.PlaceAllColliders();
                     gs.Map = map;
                 });

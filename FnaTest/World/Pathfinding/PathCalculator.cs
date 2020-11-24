@@ -259,6 +259,9 @@ namespace MTD.World.Pathfinding
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool CanStandIn(Tile tile, bool notAir = false) => notAir ? tile != null && tile.CanStandIn : tile == null || tile.CanStandIn;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool CanStand(int x, int y) => Map.CanStandAt(x, y);
+
         /// <summary>
         /// Can this tile be climbed? Ladders etc. can be climbed.
         /// </summary>
