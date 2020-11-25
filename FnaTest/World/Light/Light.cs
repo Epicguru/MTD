@@ -36,7 +36,7 @@ namespace MTD.World.Light
 
             public void Render(Batcher batcher, Camera camera)
             {
-                float size = World.Tile.SIZE * Scale;
+                float size = World.Tile.SIZE * 4;
                 float x = X * World.Tile.SIZE - size * 0.5f;
                 float y = Y * World.Tile.SIZE - size * 0.5f;
                 batcher.DrawRect(x, y, size, size, Color);

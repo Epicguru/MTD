@@ -21,7 +21,7 @@ namespace MTD.World
             Color.Create(0, 255, 0, 0),
             Color.Create(255, 255, 0, 0),
         };
-        private static readonly Sprite[] overlays = new Sprite[20]; // 1 null, 4 slopes, 15 rectangular
+        private static readonly Sprite[] overlays = new Sprite[35]; // 1 null, 4 slopes, 15 rectangular, 15 corners
         private static byte lastMask;
         internal static void LoadMasks(SpriteAtlas atlas)
         {
@@ -53,7 +53,9 @@ namespace MTD.World
             for (int j = 1; j <= 15; j++)
             {
                 string name = $"Overlay_{Convert.ToString(j, 2).PadLeft(4, '0')}";
+                string name2 = $"OverlayCorner_{Convert.ToString(j, 2).PadLeft(4, '0')}";
                 overlays[4 + j] = readSprite(name);
+                overlays[19 + j] = readSprite(name2);
             }
         }
         internal static void StartDraw(EffectParameter maskParam, EffectParameter matrixParam)
@@ -177,7 +179,7 @@ namespace MTD.World
             {
                 batcher.Draw4Col(overlays[SlopeIndex], new Vector2(X * SIZE, Y * SIZE), fullMaskColors[0], fullMaskColors[1], fullMaskColors[2], fullMaskColors[3], 0f, overlays[SlopeIndex].Origin, 1f, SpriteEffects.None, 1f);
             }
-            else
+            else if(!Def.CanClimb)
             {
                 TileLayer l = Layer;
                 int left = IsBoundaryWith(l.GetTile(X - 1, Y)) ? 8 : 0;
@@ -187,6 +189,14 @@ namespace MTD.World
                 int index = left + up + right + down;
                 if(index > 0)
                     batcher.Draw4Col(overlays[index + 4], new Vector2(X * SIZE, Y * SIZE), fullMaskColors[0], fullMaskColors[1], fullMaskColors[2], fullMaskColors[3], 0f, overlays[index + 4].Origin, 1f, SpriteEffects.None, 1f);
+
+                int tl = left == 0 && up == 0 && IsBoundaryWith(l.GetTile(X - 1, Y - 1)) ? 8 : 0;
+                int tr = right == 0 && up == 0 && IsBoundaryWith(l.GetTile(X + 1, Y - 1)) ? 4 : 0;
+                int br = right == 0 && down == 0 && IsBoundaryWith(l.GetTile(X + 1, Y + 1)) ? 2 : 0;
+                int bl = left == 0 && down == 0 && IsBoundaryWith(l.GetTile(X - 1, Y + 1)) ? 1 : 0;
+                int index2 = tl + tr + br + bl;
+                if (index2 > 0)
+                    batcher.Draw4Col(overlays[index2 + 19], new Vector2(X * SIZE, Y * SIZE), fullMaskColors[0], fullMaskColors[1], fullMaskColors[2], fullMaskColors[3], 0f, overlays[index + 19].Origin, 1f, SpriteEffects.None, 1f);
             }
 
 #if DEBUG
