@@ -2,7 +2,6 @@
 using Microsoft.Xna.Framework.Graphics;
 using MTD.Scenes;
 using Nez;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace MTD.World
@@ -21,7 +20,6 @@ namespace MTD.World
         private EffectParameter tileShaderMaskParam, tileShaderMatrixParam;
 
         private Collider[] colliders;
-        private Queue<(int, int, Collider)> collidersToAdd = new Queue<(int, int, Collider)>();
 
         public Map(int width, int height)
         {
@@ -35,36 +33,23 @@ namespace MTD.World
             colliders = new Collider[width * height];
         }
 
-        public void PlaceAllColliders()
+        /// <summary>
+        /// Raises a self-change for every single tile in the world.
+        /// This causes all colliders to be re-generated.
+        /// Very, very slow!
+        /// </summary>
+        internal void RaiseTileChangeAll()
         {
-            for (int x = 0; x < WidthInTiles; x++)
+            foreach (var layer in Layers)
             {
-                for (int y = 0; y < HeightInTiles; y++)
+                for (int x = 0; x < WidthInTiles; x++)
                 {
-                    var pos = new Point(x, y);
-                    if(ShouldHaveCollider(GetTile(x, y, 0)))
+                    for (int y = 0; y < HeightInTiles; y++)
                     {
-                        var coll = new BoxCollider(Tile.SIZE, Tile.SIZE);
-                        collidersToAdd.Enqueue((x, y, coll));
+                        var tile = layer.GetTileFast(x, y);
+                        tile?.OnTileChange(x, y, tile);
                     }
                 }
-            }
-
-            if (!Entity.IsNullOrDestroyed())
-                DequeueColliders();
-        }
-
-        private bool ShouldHaveCollider(Tile tile)
-        {
-            return false;
-        }
-
-        private void DequeueColliders()
-        {
-            while (collidersToAdd.Count > 0)
-            {
-                (int x, int y, Collider collider) = collidersToAdd.Dequeue();
-                SetCollider(collider, x, y);
             }
         }
 
@@ -82,23 +67,14 @@ namespace MTD.World
             if (existing != null)
             {
                 Entity.RemoveComponent(existing);
-                // TODO recycle.
+                // TODO recycle?
             }
             colliders[x + y * WidthInTiles] = c;
             if (c != null)
             {
-                c.LocalOffset = TileToWorldPosition(new Point(x, y));
+                c.LocalOffset = new Vector2(Tile.SIZE * x, Tile.SIZE * y);
                 Entity.AddComponent(c);
             }
-        }
-
-        private void EnsureCollider(int x, int y, bool shouldExist)
-        {
-            var curr = GetCollider(x, y);
-            if (curr == null && shouldExist)
-                SetCollider(new BoxCollider(Tile.SIZE, Tile.SIZE), x, y); // TODO get from pool
-            else if (curr != null && !shouldExist)
-                SetCollider(null, x, y);
         }
 
         public Tile SetTile(int x, int y, int z, TileDef tile, bool fromLoadOrUnload = false)
@@ -111,24 +87,62 @@ namespace MTD.World
 
             var created = Layers[z].SetTile(x, y, tile, fromLoadOrUnload);
 
-            #region Update colliders
-            if (!fromLoadOrUnload && z == 0)
+            if (!fromLoadOrUnload)
             {
-                // Self.
-                EnsureCollider(x, y, ShouldHaveCollider(created));
+                // Update surroundings.
+                RaiseTileChangesAround(x, y, z);
 
-                EnsureCollider(x - 1, y, ShouldHaveCollider(GetTile(x - 1, y, 0)));
-                EnsureCollider(x - 1, y - 1, ShouldHaveCollider(GetTile(x - 1, y - 1, 0)));
-                EnsureCollider(x, y - 1, ShouldHaveCollider(GetTile(x, y - 1, 0)));
-                EnsureCollider(x + 1, y - 1, ShouldHaveCollider(GetTile(x + 1, y - 1, 0)));
-                EnsureCollider(x + 1, y, ShouldHaveCollider(GetTile(x + 1, y, 0)));
-                EnsureCollider(x + 1, y + 1, ShouldHaveCollider(GetTile(x + 1, y + 1, 0)));
-                EnsureCollider(x, y + 1, ShouldHaveCollider(GetTile(x, y + 1, 0)));
-                EnsureCollider(x - 1, y + 1, ShouldHaveCollider(GetTile(x - 1, y + 1, 0)));
+                if (created != null)
+                    created.OnTileChange(x, y, created); // Updated newly placed tile.
+                else
+                    SetCollider(null, x, y); // Remove collider, if it existed.
             }
-            #endregion
 
             return created;
+        }
+
+        /// <summary>
+        /// Attempts to invoke the <see cref="Tile.OnTileChange(int, int, Tile)"/> method
+        /// on the 8 adjacent tiles to the specified position tile.
+        /// </summary>
+        /// <param name="x">The changing tile X coordinate.</param>
+        /// <param name="y">The changing tile Y coordinate.</param>
+        /// <param name="z">The changing tile Z coordinate.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void RaiseTileChangesAround(int x, int y, int z)
+        {
+            var tile = GetTile(x, y, z);
+            RaiseTileChange(x - 1, y, z, x, y, tile);
+            RaiseTileChange(x - 1, y - 1, z, x, y, tile);
+            RaiseTileChange(x, y - 1, z, x, y, tile);
+            RaiseTileChange(x + 1, y - 1, z, x, y, tile);
+            RaiseTileChange(x + 1, y, z, x, y, tile);
+            RaiseTileChange(x + 1, y + 1, z, x, y, tile);
+            RaiseTileChange(x, y + 1, z, x, y, tile);
+            RaiseTileChange(x - 1, y + 1, z, x, y, tile);
+        }
+
+        /// <summary>
+        /// Attempts to invoke the <see cref="Tile.OnTileChange(int, int, Tile)"/> method on
+        /// the tile at the specified position, if the tile at that position is not null.
+        /// </summary>
+        /// <param name="x">The target tile X coordinate.</param>
+        /// <param name="y">The target tile Y coordinate.</param>
+        /// <param name="z">The target tile Z coordinate (layer).</param>
+        /// <param name="cx">The changing tile X coordinate.</param>
+        /// <param name="cy">The changing tile Y coordinate.</param>
+        /// <param name="ct">The changing tile. May be null.</param>
+        /// <returns>True if the method was invoked, false otherwise.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool RaiseTileChange(int x, int y, int z, int cx, int cy, Tile ct)
+        {
+            var tile = GetTile(x, y, z);
+            if (tile != null)
+            {
+                tile.OnTileChange(cx, cy, ct);
+                return true;
+            }
+            return false;
         }
 
         public Tile GetTile(int x, int y, int z)
@@ -192,7 +206,6 @@ namespace MTD.World
 
             tileShaderMaskParam = GameScene.TilesShader.Parameters["masks"];
             tileShaderMatrixParam = GameScene.TilesShader.Parameters["_viewProjectionMatrix"];
-            DequeueColliders();
             Current = this;
         }
 

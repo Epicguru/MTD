@@ -12,9 +12,10 @@ namespace MTD.World
     {
         public const int SIZE = 64;
 
+        private static readonly Vector2 origin = new Vector2(SIZE * 0.5f, SIZE * 0.5f);
         private static Vector4[] masks;
         private static readonly Color[] uvColors = new Color[4];
-        private static readonly Color[] fullMaskColors = new Color[4]
+        private static readonly Color[] fullMaskColors =
         {
             Color.Create(0, 0, 0, 0),
             Color.Create(255, 0, 0, 0),
@@ -77,21 +78,28 @@ namespace MTD.World
         {
             get
             {
-                return true;
+                return IsSolid || Def.CanClimb;
             }
         }
         public virtual bool CanStandIn
         {
             get
             {
-                return Def.CanClimb;
+                return !IsSolid;
             }
         }
         public virtual bool BlocksLight
         {
             get
             {
-                return !Def.CanClimb || SlopeIndex != 0;
+                return IsSolid || SlopeIndex != 0;
+            }
+        }
+        public virtual bool IsSolid
+        {
+            get
+            {
+                return !Def.CanClimb;
             }
         }
         public Collider Collider
@@ -119,6 +127,8 @@ namespace MTD.World
         /// </list>
         /// </summary>
         public byte SlopeIndex;
+
+        private byte overlay1Index, overlay2Index;
 
         public Tile(TileDef def, int x, int y)
         {
@@ -170,33 +180,22 @@ namespace MTD.World
             if (lastMask != mask)
                 MakeColors(mask);
 
-            batcher.Draw4Col(spr, new Vector2(X * SIZE, Y * SIZE), uvColors[0], uvColors[1], uvColors[2], uvColors[3], 0f, spr.Origin, 1f, SpriteEffects.None, Layer.TileDarkness);
+            batcher.Draw4Col(spr, new Vector2(X * SIZE, Y * SIZE), uvColors[0], uvColors[1], uvColors[2], uvColors[3], 0f, origin, 1f, SpriteEffects.None, Layer.TileDarkness);
 
             if (Layer.Depth != 0)
                 return;
 
             if (SlopeIndex != 0)
             {
-                batcher.Draw4Col(overlays[SlopeIndex], new Vector2(X * SIZE, Y * SIZE), fullMaskColors[0], fullMaskColors[1], fullMaskColors[2], fullMaskColors[3], 0f, overlays[SlopeIndex].Origin, 1f, SpriteEffects.None, 1f);
+                batcher.Draw4Col(overlays[SlopeIndex], new Vector2(X * SIZE, Y * SIZE), fullMaskColors[0], fullMaskColors[1], fullMaskColors[2], fullMaskColors[3], 0f, origin, 1f, SpriteEffects.None, 1f);
             }
-            else if(!Def.CanClimb)
+            else if (!Def.CanClimb)
             {
-                TileLayer l = Layer;
-                int left = IsBoundaryWith(l.GetTile(X - 1, Y)) ? 8 : 0;
-                int up = IsBoundaryWith(l.GetTile(X, Y - 1)) ? 4 : 0;
-                int right = IsBoundaryWith(l.GetTile(X + 1, Y)) ? 2 : 0;
-                int down = IsBoundaryWith(l.GetTile(X, Y + 1)) ? 1 : 0;
-                int index = left + up + right + down;
-                if(index > 0)
-                    batcher.Draw4Col(overlays[index + 4], new Vector2(X * SIZE, Y * SIZE), fullMaskColors[0], fullMaskColors[1], fullMaskColors[2], fullMaskColors[3], 0f, overlays[index + 4].Origin, 1f, SpriteEffects.None, 1f);
+                if (overlay1Index > 0)
+                    batcher.Draw4Col(overlays[overlay1Index + 4], new Vector2(X * SIZE, Y * SIZE), fullMaskColors[0], fullMaskColors[1], fullMaskColors[2], fullMaskColors[3], 0f, origin, 1f, SpriteEffects.None, 1f);
 
-                int tl = left == 0 && up == 0 && IsBoundaryWith(l.GetTile(X - 1, Y - 1)) ? 8 : 0;
-                int tr = right == 0 && up == 0 && IsBoundaryWith(l.GetTile(X + 1, Y - 1)) ? 4 : 0;
-                int br = right == 0 && down == 0 && IsBoundaryWith(l.GetTile(X + 1, Y + 1)) ? 2 : 0;
-                int bl = left == 0 && down == 0 && IsBoundaryWith(l.GetTile(X - 1, Y + 1)) ? 1 : 0;
-                int index2 = tl + tr + br + bl;
-                if (index2 > 0)
-                    batcher.Draw4Col(overlays[index2 + 19], new Vector2(X * SIZE, Y * SIZE), fullMaskColors[0], fullMaskColors[1], fullMaskColors[2], fullMaskColors[3], 0f, overlays[index + 19].Origin, 1f, SpriteEffects.None, 1f);
+                if (overlay2Index > 0)
+                    batcher.Draw4Col(overlays[overlay2Index + 19], new Vector2(X * SIZE, Y * SIZE), fullMaskColors[0], fullMaskColors[1], fullMaskColors[2], fullMaskColors[3], 0f, origin, 1f, SpriteEffects.None, 1f);
             }
 
 #if DEBUG
@@ -209,6 +208,33 @@ namespace MTD.World
                 }
             }
 #endif
+        }
+
+        private void UpdateOverlayIndices()
+        {
+            if (Layer.Depth != 0)
+                return;
+
+            if (IsSolid && SlopeIndex == 0)
+            {
+                TileLayer l = Layer;
+                int left = IsBoundaryWith(l.GetTile(X - 1, Y)) ? 8 : 0;
+                int up = IsBoundaryWith(l.GetTile(X, Y - 1)) ? 4 : 0;
+                int right = IsBoundaryWith(l.GetTile(X + 1, Y)) ? 2 : 0;
+                int down = IsBoundaryWith(l.GetTile(X, Y + 1)) ? 1 : 0;
+                overlay1Index = (byte)(left + up + right + down);
+
+                int tl = left == 0 && up == 0 && IsBoundaryWith(l.GetTile(X - 1, Y - 1)) ? 8 : 0;
+                int tr = right == 0 && up == 0 && IsBoundaryWith(l.GetTile(X + 1, Y - 1)) ? 4 : 0;
+                int br = right == 0 && down == 0 && IsBoundaryWith(l.GetTile(X + 1, Y + 1)) ? 2 : 0;
+                int bl = left == 0 && down == 0 && IsBoundaryWith(l.GetTile(X - 1, Y + 1)) ? 1 : 0;
+                overlay2Index = (byte)(tl + tr + br + bl);
+            }
+            else
+            {
+                overlay1Index = 0;
+                overlay2Index = 0;
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -234,6 +260,156 @@ namespace MTD.World
         public virtual void OnRemoved(bool fromUnload)
         {
 
+        }
+
+        /// <summary>
+        /// Called whenever an adjacent tile, or this tile itself, changes in a way that could affect this one.
+        /// Also called when the tile is first placed, after <see cref="OnPlaced(bool)"/>.
+        /// For example, if an adjacent tile is removed, this method will be called with <paramref name="changedTile"/> being null.
+        /// This will only be called when the adjacent tile is in the same layer as this one.
+        /// The default implementation updates this tile's collider (if in layer 0) and recalculates graphical changes.
+        /// When overriding this method, be sure to call the base method!
+        /// </summary>
+        /// <param name="changeX">The X position of changed tile.</param>
+        /// <param name="changeY">The Y position of the changed tile.</param>
+        /// <param name="changedTile">The changed tile. May be null (when the tile was removed) or may be this tile itself, if this tile has changed.</param>
+        public virtual void OnTileChange(int changeX, int changeY, Tile changedTile)
+        {
+#if DEBUG
+            Debug.DrawHollowBox(new Vector2((X) * SIZE, (Y) * SIZE), SIZE - 20, Color.Yellow, 0.5f);
+#endif
+
+            // Always update overlays.
+            UpdateOverlayIndices();
+
+            // Check if it is self change...
+            if (changeX == X && changeY == Y)
+            {
+                // If self changed, and self is solid, update collider.
+                if (IsSolid)
+                {
+                    UpdateCollider();
+                }
+                return;
+            }
+
+            // It is an adjacent change...
+
+            // If an adjacent tile was removed, then this tile for sure needs a collider (if self is solid).
+            if (changedTile == null && IsSolid)
+            {
+                CreateCollider();
+            }
+            else if (changedTile != null)
+            {
+                // An adjacent tile was changed or placed.
+                // This may require for the collider to be either removed or created.
+                UpdateCollider();
+            }
+        }
+
+        /// <summary>
+        /// Removes, places or updates this tile's collider as required.
+        /// </summary>
+        public virtual void UpdateCollider()
+        {
+            // Only layer 0 can have colliders.
+            if (Layer.Depth != 0)
+                return;
+            // Non-solid tiles don't have colliders, so nothing needs updating.
+            if (!IsSolid)
+                return;
+
+            // If any of the surrounding tiles are air or otherwise not solid, this tile needs a collider.
+            bool hasAir = AreAnySurroundingsNotSolid();
+
+            if (hasAir)
+                CreateCollider(); // Adjacent to non-solid, create collider.
+            else
+                RemoveCollider(); // All surrounding tiles are solid, no need for a collider.
+        }
+
+        private bool AreAnySurroundingsNotSolid()
+        {
+            var t = Layer.GetTile(X - 1, Y);
+            if (t == null || !t.IsSolid)
+                return true;
+            t = Layer.GetTile(X - 1, Y - 1);
+            if (t == null || !t.IsSolid)
+                return true;
+            t = Layer.GetTile(X, Y - 1);
+            if (t == null || !t.IsSolid)
+                return true;
+            t = Layer.GetTile(X + 1, Y - 1);
+            if (t == null || !t.IsSolid)
+                return true;
+            t = Layer.GetTile(X + 1, Y);
+            if (t == null || !t.IsSolid)
+                return true;
+            t = Layer.GetTile(X + 1, Y + 1);
+            if (t == null || !t.IsSolid)
+                return true;
+            t = Layer.GetTile(X, Y + 1);
+            if (t == null || !t.IsSolid)
+                return true;
+            t = Layer.GetTile(X - 1, Y + 1);
+            if (t == null || !t.IsSolid)
+                return true;
+            return false;
+        }
+
+        /// <item>0: No slope (full tile)</item>
+        /// <item>1: Left-above slope</item>
+        /// <item>2: Right-above slope</item>
+        /// <item>3: Right-below slope</item>
+        /// <item>4: Left-below slope</item>
+        private static readonly Vector2[] Slope1Points = { new Vector2(SIZE * -0.5f, SIZE * -0.5f), new Vector2(SIZE * 0.5f, SIZE * -0.5f), new Vector2(SIZE * -0.5f, SIZE * 0.5f) };
+        private static readonly Vector2[] Slope2Points = { new Vector2(SIZE * -0.5f, SIZE * -0.5f), new Vector2(SIZE * 0.5f, SIZE * -0.5f), new Vector2(SIZE * 0.5f, SIZE * 0.5f) };
+        private static readonly Vector2[] Slope3Points = { new Vector2(SIZE * 0.5f, SIZE * -0.5f), new Vector2(SIZE * 0.5f, SIZE * 0.5f), new Vector2(SIZE * -0.5f, SIZE * 0.5f) };
+        private static readonly Vector2[] Slope4Points = { new Vector2(SIZE * -0.5f, SIZE * -0.5f), new Vector2(SIZE * 0.5f, SIZE * 0.5f), new Vector2(SIZE * -0.5f, SIZE * 0.5f) };
+        protected virtual void CreateCollider()
+        {
+            if (Layer.Depth != 0)
+                return;
+#if DEBUG
+            if (!IsSolid)
+                throw new Exception($"CreateCollider() called on non-solid tile.");
+#endif
+            Collider c;
+            switch (SlopeIndex)
+            {
+                case 0:
+                    c = new BoxCollider(SIZE, SIZE);
+                    break;
+                case 1:
+                    c = new PolygonCollider(Slope1Points, false);
+                    break;
+                case 2:
+                    c = new PolygonCollider(Slope2Points, false);
+                    break;
+                case 3:
+                    c = new PolygonCollider(Slope3Points, false);
+                    break;
+                case 4:
+                    c = new PolygonCollider(Slope4Points, false);
+                    break;
+                default:
+                    c = null;
+                    break;
+            }
+
+            Layer.Map.SetCollider(c, X, Y);
+        }
+
+        protected virtual void RemoveCollider()
+        {
+            if (Layer.Depth != 0)
+                return;
+#if DEBUG
+            if (!IsSolid)
+                throw new Exception($"RemoveCollider() called on non-solid tile.");
+#endif
+            Layer.Map.SetCollider(null, X, Y);
         }
     }
 }

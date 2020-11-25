@@ -499,7 +499,6 @@ namespace MTD
                 {
                     var map = new Map(1000, 200);
                     GameScene.GenerateMap(map);
-                    map.PlaceAllColliders();
                     gs.Map = map;
                 });
             };

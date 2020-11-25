@@ -103,6 +103,7 @@ namespace MTD.Scenes
             var mapEnt = CreateEntity("Map");
             Map.RenderLayer = Main.LAYER_TILES;
             mapEnt.AddComponent(Map);
+            Map.RaiseTileChangeAll();
 
             Core.GetGlobalManager<ImGuiManager>().RegisterDrawCommand(DrawImGui);
 
