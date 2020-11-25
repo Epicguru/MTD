@@ -32,7 +32,7 @@ float4 Blur(float2 uv : TEXCOORD0) : COLOR0
 
   // Scene has 0 alpha where cleared to sky.
   // Lights should not render in sky, it gives a 'volumetric' look that isn't good.
-  return lerp(color, lerp(scene, scene * color, scene.a), axis.z);
+  return lerp(color, scene * color, axis.z);
 }
 
 technique Technique1

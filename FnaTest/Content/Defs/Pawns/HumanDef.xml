@@ -1,0 +1,11 @@
+﻿
+<HumanDef parent="PawnDef" abstract="true" class="MTD.Entities.Human.HumanDef">
+
+  <Name>Generic Human</Name>
+  <Health>200</Health>
+  <MovementSpeed>7</MovementSpeed>
+  <FaceMovementDirection>true</FaceMovementDirection>
+  <ColliderSize>(28, 120)</ColliderSize>
+  <ColliderOffset>(0, -28)</ColliderOffset>
+
+</HumanDef>

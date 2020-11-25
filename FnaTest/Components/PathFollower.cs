@@ -175,9 +175,9 @@ namespace MTD.Components
 
                 if (FaceMovementDirection && !Entity.IsNullOrDestroyed())
                 {
-                    var spr = Entity.GetComponentInChildren<SpriteRenderer>();
-                    if(spr != null)
-                        spr.FlipX = !IsMovingRight;
+                    var scale = Entity.LocalScale;
+                    scale.X = IsMovingRight ? 1 : -1f;
+                    Entity.LocalScale = scale;
                 }
             }
         }

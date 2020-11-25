@@ -1,0 +1,7 @@
+﻿
+<PawnDef abstract="true" parent="EntityDef" class="MTD.Entities.PawnDef">
+
+  <Name>Base Pawn</Name>
+  <Health>100</Health>
+
+</PawnDef>

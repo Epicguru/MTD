@@ -67,6 +67,38 @@ namespace MTD.Entities
         }
     }
 
+    public class SubSpriteDef : EntityDef
+    {
+        public Sprite Sprite;
+        public bool FlipX, FlipY;
+        public Color Color;
+        public Vector2 OriginNormalized = new Vector2(-1, -1);
+
+        public override Entity Create(Scene scene, Entity parent = null)
+        {
+            var e = base.Create(scene, parent);
+            if (e == null)
+                return null;
+
+            var spr = e.GetComponent<SpriteRenderer>();
+            if (spr != null)
+            {
+                spr.Sprite = Sprite;
+                spr.Color = Color;
+                if (OriginNormalized.X != -1 && Sprite != null)
+                {
+                    float x = OriginNormalized.X;
+                    float y = OriginNormalized.Y;
+                    spr.Origin = new Vector2(x * Sprite.SourceRect.Width, y * Sprite.SourceRect.Height);
+                }
+                spr.FlipX = FlipX;
+                spr.FlipY = FlipY;
+            }
+
+            return e;
+        }
+    }
+
     public abstract class RenderableComponentDef : ComponentDef
     {
         public Color Color = new Color(255, 255, 255, 255);

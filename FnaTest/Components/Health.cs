@@ -91,10 +91,10 @@ namespace MTD.Components
         public Health(int startHealth, int maxHealth)
         {
             this.MaxHealth = maxHealth;
-            this._currentHealth = startHealth;
-            _currentHealth = Math.Clamp(_currentHealth, 0, MaxHealth);
+            this._currentHealth = Mathf.Clamp(startHealth, 0, maxHealth);
         }
 
+        private static int healthChangeImGui;
         [InspectorDelegate]
         private void DrawInspector()
         {
@@ -110,7 +110,15 @@ namespace MTD.Components
             int max = MaxHealth;
             ImGui.InputInt("Max:", ref max);
             MaxHealth = max;
-            ImGui.Text($"{UponDeathEvent?.GetInvocationList()?.Length ?? 0} death listeners.");
+            ImGui.Text($"{UponDeathEvent?.GetInvocationList()?.Length ?? 0} death listeners, {UponHealthChangedEvent?.GetInvocationList()?.Length ?? 0} change listeners.");
+
+            if (ImGui.Button("Change Health"))
+            {
+                ChangeHealth(healthChangeImGui, "Dev Console");
+            }
+            ImGui.SameLine();
+            ImGui.SetNextItemWidth(100);
+            ImGui.InputInt("Amount", ref healthChangeImGui, 10);
         }
 
         public override void OnRemovedFromEntity()

@@ -128,7 +128,7 @@ namespace MTD.World.Pathfinding
 
                 float currentCostSoFar = costSoFar[current];
 
-                Vector2 pos = Map.Current.TileToWorldPosition(current);
+                //Vector2 pos = Map.Current.TileToWorldPosition(current);
                 //Debug.DrawHollowBox(pos, Tile.SIZE, Color.Orange, 0);
 
                 GetNear(current);
@@ -138,7 +138,7 @@ namespace MTD.World.Pathfinding
                     float newCost = currentCostSoFar + GetCost(current, n);
                     bool hasCostSoFar = costSoFar.TryGetValue(n, out float nCostSoFar);
 
-                    Debug.DrawHollowBox(pos, Tile.SIZE - 10, Color.Blue);
+                    //Debug.DrawHollowBox(pos, Tile.SIZE - 10, Color.Blue);
 
                     // If the node has never been explored, or the current path is shorter than a prevous route...
                     if (!hasCostSoFar || newCost < nCostSoFar)
@@ -148,7 +148,7 @@ namespace MTD.World.Pathfinding
                         open.Enqueue(n, priority);
                         count++;
                         cameFrom[n] = current;
-                        pos = Map.Current.TileToWorldPosition(n);
+                        //pos = Map.Current.TileToWorldPosition(n);
                         //Debug.DrawHollowBox(pos, Tile.SIZE - 4, Color.Blue, 0);
                     }
                 }
@@ -196,15 +196,15 @@ namespace MTD.World.Pathfinding
 
             Tile tLeft = Map.GetTile(x - 1, y, z);
             Tile tTopLeft = Map.GetTile(x - 1, y - 1, z);
-            Tile tTopTopLeft = Map.GetTile(x - 1, y - 2, z);
+            //Tile tTopTopLeft = Map.GetTile(x - 1, y - 2, z);
             Tile tBotLeft = Map.GetTile(x - 1, y + 1, z);
-            Tile tBotBotLeft = Map.GetTile(x - 1, y + 2, z);
+            //Tile tBotBotLeft = Map.GetTile(x - 1, y + 2, z);
 
             Tile tRight = Map.GetTile(x + 1, y, z);
             Tile tTopRight = Map.GetTile(x + 1, y - 1, z);
-            Tile tTopTopRight = Map.GetTile(x + 1, y - 2, z);
+            //Tile tTopTopRight = Map.GetTile(x + 1, y - 2, z);
             Tile tBotRight = Map.GetTile(x + 1, y + 1, z);
-            Tile tBotBotRight = Map.GetTile(x + 1, y + 2, z);
+            //Tile tBotBotRight = Map.GetTile(x + 1, y + 2, z);
 
             Tile tTop = Map.GetTile(x, y - 1, z);
             Tile tTopTop = Map.GetTile(x, y - 2, z);

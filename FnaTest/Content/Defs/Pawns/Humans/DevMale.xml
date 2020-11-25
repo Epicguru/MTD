@@ -1,0 +1,19 @@
+﻿<Defs>
+
+  <DevMaleDef parent="HumanDef">
+
+    <Name>Dev: Male Human</Name>
+    <SkinColor>#ffe7b3</SkinColor>
+    <HairColor>#804814</HairColor>
+    
+    <BodyCol>Pawns/Human/BodyColor</BodyCol>
+    <BodyDetail>Pawns/Human/BodyDetail</BodyDetail>
+    <BodyOut>Pawns/Human/BodyOutline</BodyOut>
+    <HeadCol>Pawns/Human/HeadColor</HeadCol>
+    <Face>Pawns/Human/Face</Face>
+    <Hair>Pawns/Human/Hair</Hair>
+    <HeadOut>Pawns/Human/HeadOutline</HeadOut>
+
+  </DevMaleDef>
+
+</Defs>

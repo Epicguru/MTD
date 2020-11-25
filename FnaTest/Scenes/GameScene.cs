@@ -68,12 +68,13 @@ namespace MTD.Scenes
         private SkyLightComp skyLightComp;
         private Material tilesMat;
         private Light light;
+        private SpriteRenderer exampleEnt;
 
         public override void Initialize()
         {
             base.Initialize();
 
-            var otherMat = new Material() {SamplerState = SamplerState.LinearClamp};
+            var otherMat = new Material() {SamplerState = SamplerState.LinearClamp, BlendState=BlendState.NonPremultiplied};
             tilesMat = new Material() {SamplerState = SamplerState.LinearClamp, Effect=TilesShader};
 
             base.ClearColor = Color.CornflowerBlue;

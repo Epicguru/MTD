@@ -1,4 +1,7 @@
-﻿using ImGuiNET;
+﻿
+#define ALWAYS_CATCH_ERRORS
+
+using ImGuiNET;
 using JDef;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -20,7 +23,10 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Windows;
 using Debug = Nez.Debug;
+using Point = Microsoft.Xna.Framework.Point;
+using WindowStyle = Nez.UI.WindowStyle;
 
 namespace MTD
 {
@@ -28,9 +34,39 @@ namespace MTD
     {
         private static void Main(string[] _)
         {
-            Console.WriteLine("Hello World!");
-            using Game g = new Main();
-            g.Run();
+#if !DEBUG || ALWAYS_CATCH_ERRORS
+            string genCrashReport(Exception e)
+            {
+                return e.ToString();
+            }
+
+            try
+            {
+#endif
+                using Main g = new Main();
+                g.Run();
+#if !DEBUG || ALWAYS_CATCH_ERRORS
+            }
+            catch (Exception e)
+            {
+                try
+                {
+                    string folder = "./Crash Reports/";
+                    string name = DateTime.UtcNow.ToString("s-m-HH--d-MM-yy");
+                    string fileName = folder + name + ".txt";
+                    string data = genCrashReport(e);
+                    new FileInfo(fileName).Directory.Create();
+                    File.WriteAllText(fileName, data);
+                }
+                catch(Exception e2)
+                {
+                    Debug.Error(e2.ToString());
+                }
+                
+                MessageBox.Show($"Uh oh! The game has crashed. Error:\n{e}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                Environment.Exit(-1); // Force shutdown threads.
+            }
+#endif
         }
     }
 
@@ -46,6 +82,7 @@ namespace MTD
         public static SpriteAtlas Atlas { get; private set; }
         public static SpriteAtlas UIAtlas { get; private set; }
 
+        public static BitmapFont Font24 { get; private set; }
         public static BitmapFont Font32 { get; private set; }
         public static BitmapFont FontTitle { get; private set; }
 
@@ -53,6 +90,8 @@ namespace MTD
         public static Pathfinder Pathfinder { get; internal set; }
 
         private static ThreadController _threadController;
+
+        private bool hasExited = false;
 
         public static void PostToMainThread(Action a)
         {
@@ -74,10 +113,12 @@ namespace MTD
 
         protected override void OnExiting(object sender, EventArgs args)
         {
+            if (hasExited)
+                return;
+            hasExited = true;
+
             base.OnExiting(sender, args);
-
             Pathfinder?.Dispose();
-
             try
             {
                 Scene?.Unload();
@@ -99,8 +140,6 @@ namespace MTD
                 ls.SetMessage("Loading core content...");
                 LoadEssentialContent();
                 PackMainAtlas(ls);
-                ls.SetMessage("Loading main atlas...");
-                Atlas = Content.LoadSpriteAtlas("Content/MainAtlas.atlas", true);
 
                 sw.Stop();
                 Debug.Log("Took {0} ms to do core asset load", sw.ElapsedMilliseconds);
@@ -126,31 +165,7 @@ namespace MTD
                 var sw = new Stopwatch();
                 sw.Start();
 
-                #region Load Defs
-                // Load defs!
-                Defs = new DefDatabase();
-                Defs.AddCustomResolver(typeof(Sprite), (args) =>
-                {
-                    string path = args.XmlNode.InnerText;
-                    var sprite = Main.Atlas.GetSprite(path);
-                    if (sprite == null)
-                        Debug.Error("Failed to find sprite for path '{0}'", path);
-                    return sprite;
-                });
-                ls.SetMessage("Loading defs...");
-                Defs.LoadFromDir("Content/Defs/");
-                ls.SetMessage("Processing defs...");
-                Defs.Process();
-
-                // Load specific classes of defs.
-                ls.SetMessage("Sorting defs...");
-                TileDef.Load();
-                EntityDef.Load();
-
-                ls.SetMessage("Loading ui atlas...");
-                UIAtlas = Content.LoadSpriteAtlas("Content/UI.atlas", true);
-
-                #endregion
+                LoadGeneralContent(ls);
 
                 sw.Stop();
                 Debug.Log("Took {0} ms to do general asset load", sw.ElapsedMilliseconds);
@@ -200,8 +215,57 @@ namespace MTD
 
         private void LoadEssentialContent()
         {
-            Font32 = Content.LoadBitmapFont("Content/Fonts/General32.fnt");
             FontTitle = Content.LoadBitmapFont("Content/Fonts/Title72.fnt");
+        }
+
+        private void LoadGeneralContent(LoadingScene ls)
+        {
+            #region Main font, main atlas.
+
+            ls.SetMessage("Loading main fonts...");
+            Font32 = Content.LoadBitmapFont("Content/Fonts/General32.fnt");
+            Font24 = Content.LoadBitmapFont("Content/Fonts/General24.fnt");
+
+            ls.SetMessage("Loading main atlas...");
+            Atlas = Content.LoadSpriteAtlas("Content/MainAtlas.atlas", true);
+
+            #endregion
+            #region Load Defs
+
+            // Load defs!
+            Defs = new DefDatabase();
+            Defs.AddCustomResolver(typeof(Sprite), (args) =>
+            {
+                string path = args.XmlNode.InnerText;
+                var sprite = Atlas.GetSprite(path);
+                if (sprite == null)
+                    Debug.Error("Failed to find sprite for path '{0}'", path);
+                return sprite;
+            });
+
+            ls.SetMessage("Loading defs...");
+            Defs.LoadFromDir("Content/Defs/");
+
+            ls.SetMessage("Processing defs...");
+            Defs.Process();
+
+            #endregion
+
+            #region Specific Def Load (TileDef, EntityDef etc.)
+
+            // Load specific classes of defs.
+            ls.SetMessage("Sorting defs...");
+            TileDef.Load();
+            EntityDef.Load();
+
+            #endregion
+
+            #region UI Atlas
+
+            ls.SetMessage("Loading ui atlas...");
+            UIAtlas = Content.LoadSpriteAtlas("Content/UI.atlas", true);
+
+            #endregion
         }
 
         private static Point lastSize;
@@ -421,13 +485,6 @@ namespace MTD
             var manager = Core.GetGlobalManager<ImGuiManager>();
             manager.RegisterDrawCommand(DrawSomeUI);
 
-            // Create entity from def.
-            var def = Main.Defs.GetNamed<EntityDef>("TestEntityDef");
-            var e = def.Create(this);
-
-            e.AddComponent(new BoxDrawer());
-            e.Name = "FatOne";
-
             // Create UI.
             SetupMenu();
             UIScaleController.RegisterCanvas(ui);
@@ -456,12 +513,6 @@ namespace MTD
             vel *= Time.UnscaledDeltaTime * Tile.SIZE * 10f;
 
             Camera.Position += vel;
-
-            var mp = Input.MousePosition;
-            mp = Camera.ScreenToWorldPoint(mp);
-
-            var e = FindEntity("FatOne");
-            e.Position = mp;
 
             base.Update();
         }

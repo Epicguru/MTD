@@ -73,6 +73,11 @@ namespace MTD.World
             if (c != null)
             {
                 c.LocalOffset = new Vector2(Tile.SIZE * x, Tile.SIZE * y);
+#if DEBUG
+                if (c is BoxCollider bc)
+                    bc.DrawDebug = false;
+#endif
+
                 Entity.AddComponent(c);
             }
         }

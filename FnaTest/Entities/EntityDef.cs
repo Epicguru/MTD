@@ -43,6 +43,7 @@ namespace MTD.Entities
         public int UpdateOrder;
 
         public List<ComponentDef> Components;
+        public List<Def> Children;
 
         public override void Validate()
         {
@@ -63,7 +64,7 @@ namespace MTD.Entities
             }
         }
 
-        public Entity Create(Scene scene, Entity parent = null)
+        public virtual Entity Create(Scene scene, Entity parent = null)
         {
             if (scene == null)
             {
@@ -94,6 +95,15 @@ namespace MTD.Entities
                 created.SetParent(parent);
                 created.LocalPosition = LocalPosition;
                 created.LocalRotationDegrees = LocalRotation;
+            }
+
+            if (Children != null)
+            {
+                foreach (var child in Children)
+                {
+                    if(child is EntityDef def)
+                        def.Create(scene, created);
+                }
             }
 
             return created;

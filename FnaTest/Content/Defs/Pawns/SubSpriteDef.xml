@@ -1,0 +1,12 @@
+<Defs>
+
+  <SubSpriteDef abstract="true" parent="EntityDef" class="MTD.Entities.SubSpriteDef">
+    <Name>Sprite</Name>
+    <Components>
+      <li class="MTD.Entities.SpriteRendererDef">
+          
+      </li>
+    </Components>
+  </SubSpriteDef>
+
+</Defs>

@@ -6,6 +6,7 @@
     <MonoGamePlatform>DesktopGL</MonoGamePlatform>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <RunPostBuildEvent>Always</RunPostBuildEvent>
+    <UseWPF>true</UseWPF>
   </PropertyGroup>
 
   <ItemGroup>
