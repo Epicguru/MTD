@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System.Collections.Generic;
+using Microsoft.Xna.Framework;
 using Nez;
 using Nez.Sprites;
 using Nez.Textures;
@@ -59,6 +60,24 @@ namespace MTD
             if(notFoundCount > 0)
                 Debug.Error("Failed to find a total of {0} frames, out of a total {1}", notFoundCount, frameCount);
             return anim;
+        }
+
+        /// <summary>
+        /// Gets a random element of this collection.
+        /// Will return default(T) if the collection is null or empty.
+        /// </summary>
+        public static T GetRandom<T>(this IReadOnlyList<T> collection)
+        {
+            if (collection == null)
+                return default;
+
+            if (collection.Count == 0)
+                return default;
+            if (collection.Count == 1)
+                return collection[0];
+
+            int index = Random.Range(0, collection.Count);
+            return collection[index];
         }
     }
 }

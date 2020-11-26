@@ -9,6 +9,7 @@ using MTD.World.Pathfinding;
 using Nez;
 using Nez.ImGuiTools;
 using System;
+using System.Linq;
 using MTD.World.Light;
 using Nez.Sprites;
 using Nez.Textures;
@@ -357,6 +358,22 @@ namespace MTD.Scenes
             }
             #endregion
 
+            #region Projectiles
+
+            ImGui.Begin("Projectiles");
+            ImGui.BeginChild("projectiles");
+
+            foreach (var pair in Projectile.PoolCounts())
+            {
+                ImGui.BulletText($"{pair.type.DefName}: {pair.count}");
+            }
+
+            ImGui.EndChild();
+
+            ImGui.End();
+
+            #endregion
+
             #region EntityDef spawn
 
             if (entityDefNames == null)
@@ -426,12 +443,11 @@ namespace MTD.Scenes
             }
             ImGui.EndMainMenuBar();
 
-            if (doSpawnBullets && Input.LeftMouseButtonPressed)
+            if (doSpawnBullets && Input.LeftMouseButtonDown)
             {
-                float angle = Random.NextAngle();
-                Vector2 vel = new Vector2(MathF.Cos(angle), MathF.Sin(angle)) * Tile.SIZE * 16;
-                var ent = CreateEntity("Bullet", Input.WorldMousePos);
-                ent.AddComponent(new Bullet(){Velocity = vel});
+                var def = ProjectileDef.GetAll().GetRandom();
+                float angle = Random.AngleRad();
+                Projectile.Spawn(def, Input.WorldMousePos, angle);
             }
 
             if ((doWorldSelection || linecastOnDrag) && Input.LeftMouseButtonPressed)

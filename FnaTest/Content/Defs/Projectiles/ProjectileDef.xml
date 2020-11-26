@@ -1,0 +1,9 @@
+
+<ProjectileDef parent="EntityDef" abstract="true" class="MTD.Components.ProjectileDef">
+
+  <Name>Projectile</Name>
+  <Lifetime>10</Lifetime>
+  <BaseSpeed>20</BaseSpeed> <!-- 20 tiles per second, fairly slow. -->
+  <Gravity>(0, 16.0)</Gravity> <!-- By default, use G=16 compared to earth's 9.81. It just looks and feels better in-game -->
+
+</ProjectileDef>

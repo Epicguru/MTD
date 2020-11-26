@@ -1,0 +1,8 @@
+
+<SniperBulletDef parent="BulletDef">
+
+  <Name>Sniper Bullet</Name>
+  <TrailLength>128</TrailLength>
+  <BaseSpeed>300</BaseSpeed>
+
+</SniperBulletDef>

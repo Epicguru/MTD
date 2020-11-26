@@ -1,5 +1,4 @@
 ﻿using Microsoft.Xna.Framework;
-using MTD.World;
 using Nez;
 
 namespace MTD.Components
@@ -14,9 +13,24 @@ namespace MTD.Components
             }
         }
 
-        public float TrailLength = Tile.SIZE * 1.5f;
-        public float TrailThickness = 2;
-        public Color TrailColor = Color.Yellow;
+        public float TrailLength;
+        public float TrailThickness;
+        public Color TrailColor;
+
+        public Bullet(BulletDef def) : base(def)
+        {
+
+        }
+
+        public override void Reset()
+        {
+            base.Reset();
+
+            var bd = Def as BulletDef;
+            TrailLength = bd.TrailLength;
+            TrailThickness = bd.TrailThickness;
+            TrailColor = bd.TrailColor;
+        }
 
         private Vector2 TrailStart()
         {
@@ -42,6 +56,18 @@ namespace MTD.Components
                 return;
 
             h.ChangeHealth(-10, "Bullet");
+        }
+    }
+
+    public class BulletDef : ProjectileDef
+    {
+        public float TrailLength;
+        public float TrailThickness;
+        public Color TrailColor;
+
+        protected override Projectile CreateProjectile()
+        {
+            return new Bullet(this);
         }
     }
 }

@@ -1,5 +1,5 @@
 ﻿
-#define ALWAYS_CATCH_ERRORS
+//#define ALWAYS_CATCH_ERRORS
 
 using ImGuiNET;
 using JDef;
@@ -257,6 +257,7 @@ namespace MTD
             ls.SetMessage("Sorting defs...");
             TileDef.Load();
             EntityDef.Load();
+            ProjectileDef.Load();
 
             #endregion
 
