@@ -1,0 +1,9 @@
+
+<MoteDef abstract="true" class="MoteDef">
+
+  <!-- Time, in seconds, until the mote starts fading after not being maintained. -->
+  <FadeStartTime>1</FadeStartTime>
+  <!-- Time, in seconds, until the mote finishes fading after not being maintained. -->
+  <FadeEndTime>3</FadeEndTime>
+
+</MoteDef>

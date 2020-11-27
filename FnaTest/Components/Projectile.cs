@@ -192,8 +192,10 @@ namespace MTD.Components
     {
         #region Static Methods 
 
+        public new static IReadOnlyList<ProjectileDef> All { get { return allDefs; } }
         private static readonly Dictionary<string, ProjectileDef> namedDefs = new Dictionary<string, ProjectileDef>();
         private static ProjectileDef[] allDefs;
+
         internal new static void Load()
         {
             var db = Main.Defs;
@@ -204,15 +206,12 @@ namespace MTD.Components
             }
             allDefs = namedDefs.Values.ToArray();
         }
+
         public new static ProjectileDef Get(string defName)
         {
             if (namedDefs.TryGetValue(defName, out var def))
                 return def;
             return null;
-        }
-        public new static IReadOnlyList<ProjectileDef> GetAll()
-        {
-            return allDefs;
         }
 
         #endregion

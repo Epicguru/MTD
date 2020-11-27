@@ -1,0 +1,7 @@
+
+<PickMote parent="SpriteMoteDef">
+
+  <Sprite>Anim/Motes/Pickaxe</Sprite>
+  <SlideTarget>(0, -50)</SlideTarget> <!-- Slide upwards -->
+
+</PickMote>

@@ -1,0 +1,10 @@
+
+<AnimPickMote parent="AnimatedMoteDef">
+
+  <Project>Anim/Motes/Motes</Project>
+  <Entity>Pick</Entity>
+  <Animation>Swing</Animation>
+  
+  <Speed>2.0</Speed>
+
+</AnimPickMote>

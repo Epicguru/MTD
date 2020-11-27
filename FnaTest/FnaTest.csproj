@@ -21,9 +21,14 @@
     <ProjectReference Include="..\Nez\Nez.ImGui\Nez.FNA.Standard.ImGui.csproj" />
     <ProjectReference Include="..\Nez\Nez.Portable\Nez.FNA.Standard.csproj" />
     <ProjectReference Include="..\Nez\Nez.SpriteAtlasPacker\SpriteAtlasPacker\SpriteAtlasPacker.Standard.csproj" />
+    <ProjectReference Include="..\Spriter2Nez\Spriter2Nez.csproj" />
+    <ProjectReference Include="..\SpriterDotNet\SpriterDotNet.csproj" />
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="FAudio.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="FNA3D.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

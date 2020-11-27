@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<spriter_data scml_version="1.0" generator="BrashMonkey Spriter" generator_version="r11">
+    <folder id="0">
+        <file id="0" name="Pickaxe.png" width="88" height="68" pivot_x="0.5" pivot_y="0"/>
+        <file id="1" name="Star.png" width="55" height="52" pivot_x="0.5" pivot_y="0.43"/>
+    </folder>
+    <entity id="0" name="Pick">
+        <animation id="0" name="Swing" length="1400" interval="100">
+            <mainline>
+                <key id="0">
+                    <object_ref id="0" timeline="0" key="0" z_index="0"/>
+                    <object_ref id="1" timeline="1" key="0" z_index="1"/>
+                </key>
+                <key id="1" time="189">
+                    <object_ref id="0" timeline="0" key="0" z_index="0"/>
+                    <object_ref id="1" timeline="1" key="0" z_index="1"/>
+                </key>
+                <key id="2" time="190">
+                    <object_ref id="0" timeline="0" key="1" z_index="0"/>
+                    <object_ref id="1" timeline="1" key="0" z_index="1"/>
+                </key>
+                <key id="3" time="277">
+                    <object_ref id="0" timeline="0" key="1" z_index="0"/>
+                    <object_ref id="1" timeline="1" key="1" z_index="1"/>
+                </key>
+                <key id="4" time="280" curve_type="cubic" c1="0.995025" c2="0.995025">
+                    <object_ref id="0" timeline="0" key="2" z_index="0"/>
+                    <object_ref id="1" timeline="1" key="1" z_index="1"/>
+                </key>
+                <key id="5" time="391" curve_type="cubic" c1="0.995025" c2="0.995025">
+                    <object_ref id="0" timeline="0" key="2" z_index="0"/>
+                    <object_ref id="1" timeline="1" key="2" z_index="1"/>
+                </key>
+                <key id="6" time="397" curve_type="cubic" c1="0.995025" c2="0.995025">
+                    <object_ref id="0" timeline="0" key="3" z_index="0"/>
+                    <object_ref id="1" timeline="1" key="2" z_index="1"/>
+                </key>
+                <key id="7" time="518" curve_type="cubic" c1="0.995025" c2="0.995025">
+                    <object_ref id="0" timeline="0" key="3" z_index="0"/>
+                    <object_ref id="1" timeline="1" key="3" z_index="1"/>
+                </key>
+                <key id="8" time="640" curve_type="cubic" c1="0.995025" c2="0.995025">
+                    <object_ref id="0" timeline="0" key="4" z_index="0"/>
+                    <object_ref id="1" timeline="1" key="3" z_index="1"/>
+                </key>
+                <key id="9" time="1276" curve_type="cubic" c1="0.995025" c2="0.995025">
+                    <object_ref id="0" timeline="0" key="5" z_index="0"/>
+                    <object_ref id="1" timeline="1" key="3" z_index="1"/>
+                </key>
+                <key id="10" time="1400">
+                    <object_ref id="0" timeline="0" key="6" z_index="0"/>
+                    <object_ref id="1" timeline="1" key="3" z_index="1"/>
+                </key>
+            </mainline>
+            <timeline id="0" name="Pickaxe">
+                <key id="0" curve_type="cubic" c1="0.7463" c2="0.9502">
+                    <object folder="0" file="0" y="1" angle="0"/>
+                </key>
+                <key id="1" time="190" curve_type="cubic" c1="0.995" c2="0.5721" spin="-1">
+                    <object folder="0" file="0" y="1" angle="63.917306"/>
+                </key>
+                <key id="2" time="280" curve_type="cubic" c1="0.5672" c2="0.8657">
+                    <object folder="0" file="0" y="1" angle="288.602775"/>
+                </key>
+                <key id="3" time="397" curve_type="cubic" c1="0.995025" c2="0.995025" spin="-1">
+                    <object folder="0" file="0" y="1" angle="302.099899"/>
+                </key>
+                <key id="4" time="640">
+                    <object folder="0" file="0" y="1" angle="288.602775"/>
+                </key>
+                <key id="5" time="1276" spin="-1">
+                    <object folder="0" file="0" y="1" angle="6.092725"/>
+                </key>
+                <key id="6" time="1400" spin="0">
+                    <object folder="0" file="0" y="1" angle="0"/>
+                </key>
+            </timeline>
+            <timeline id="1" name="Star">
+                <key id="0" spin="0">
+                    <object folder="0" file="1" x="58.001931" y="-28.481699" angle="0" scale_x="0.286473" scale_y="0.286473" a="0"/>
+                </key>
+                <key id="1" time="277" spin="-1">
+                    <object folder="0" file="1" x="58.001931" y="-28.481699" angle="0" scale_x="0.286473" scale_y="0.286473" a="0"/>
+                </key>
+                <key id="2" time="391" spin="-1">
+                    <object folder="0" file="1" x="41.756297" y="4.154815" angle="226.798183" scale_x="0.618273" scale_y="0.618273" a="0.995238"/>
+                </key>
+                <key id="3" time="518" spin="-1">
+                    <object folder="0" file="1" x="33.816692" y="0.331044" angle="99.29942" scale_x="0.159814" scale_y="0.159814" a="0"/>
+                </key>
+            </timeline>
+        </animation>
+    </entity>
+</spriter_data>

@@ -1,8 +1,8 @@
 ﻿
-<BaseTile abstract="true" class="MTD.World.TileDef">
+<BaseTile abstract="true" class="TileDef">
 
   <Sprite>Tiles/MissingTexture</Sprite>
-  <Class>MTD.World.Tile</Class>
+  <Class>Tile</Class>
   <Color>(1, 1, 1, 1)</Color>
   <TickInterval>-1</TickInterval>
 

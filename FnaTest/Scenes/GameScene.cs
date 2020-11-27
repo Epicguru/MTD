@@ -10,6 +10,7 @@ using Nez;
 using Nez.ImGuiTools;
 using System;
 using System.Linq;
+using MTD.Effects;
 using MTD.World.Light;
 using Nez.Sprites;
 using Nez.Textures;
@@ -69,7 +70,7 @@ namespace MTD.Scenes
         private SkyLightComp skyLightComp;
         private Material tilesMat;
         private Light light;
-        private SpriteRenderer exampleEnt;
+        private Mote mote;
 
         public override void Initialize()
         {
@@ -120,7 +121,10 @@ namespace MTD.Scenes
 
             LightManager = CreateEntity("Light manager").AddComponent(new LightManager());
 
+            CreateEntity("Mote Renderer").AddComponent(new MoteRenderer());
+
             Tile.LoadMasks(Main.Atlas);
+            Mote.ClearAll();
 
             CreateUI(CreateEntity("UI"));
 
@@ -155,6 +159,8 @@ namespace MTD.Scenes
             LightPostProcessor = null;
             LightRenderer = null;
 
+            Mote.ClearAll(); // Don't need these anymore...
+
             // TODO unload/dispose world.
 
             base.Unload();
@@ -180,7 +186,7 @@ namespace MTD.Scenes
                 Camera.Zoom -= Time.UnscaledDeltaTime * 0.5f;
 
             vel.Normalize();
-            vel *= Time.UnscaledDeltaTime * Tile.SIZE * 10f;
+            vel *= (Time.UnscaledDeltaTime * Tile.SIZE * 10f) / Camera.RawZoom;
 
             Camera.Position += vel;
 
@@ -205,6 +211,8 @@ namespace MTD.Scenes
                 Map.AutoSlope(pos.X, pos.Y, 0);
             }
 
+            Input.UpdateWorldMousePos();
+
             base.Update();
 
             if (light == null)
@@ -218,6 +226,23 @@ namespace MTD.Scenes
             (light as SpreadLight).Radius = 30;
             light.Recalculate();
             LightRenderer.Material.BlendState = BlendState.NonPremultiplied;
+
+            if (Input.IsKeyDown(Keys.M))
+            {
+                if (mote == null)
+                {
+                    var def = MoteDef.Get(Random.Chance(0.5f) ? "AnimPickMote" : "PickMote");
+                    mote = Mote.Spawn(def, Input.WorldMousePos);
+                }
+
+                mote.Position = Input.WorldMousePos;
+                mote.Maintain();
+            }
+            else
+            {
+                // Allow that mote to decay.
+                mote = null;
+            }
 
             Main.Pathfinder?.Update();
         }
@@ -358,17 +383,27 @@ namespace MTD.Scenes
             }
             #endregion
 
-            #region Projectiles
+            #region Pools
 
-            ImGui.Begin("Projectiles");
-            ImGui.BeginChild("projectiles");
+            ImGui.Begin("Pools");
 
-            foreach (var pair in Projectile.PoolCounts())
+            if (ImGui.CollapsingHeader("Projectiles", ImGuiTreeNodeFlags.DefaultOpen))
             {
-                ImGui.BulletText($"{pair.type.DefName}: {pair.count}");
+                foreach (var pair in Projectile.PoolCounts())
+                {
+                    ImGui.BulletText($"{pair.type.DefName}: {pair.count}");
+                }
             }
 
-            ImGui.EndChild();
+            if (ImGui.CollapsingHeader("Motes", ImGuiTreeNodeFlags.DefaultOpen))
+            {
+                ImGui.Text($"{Mote.ActiveMoteCount} active motes.");
+                ImGui.Separator();
+                foreach (var pair in Mote.PoolCounts())
+                {
+                    ImGui.BulletText($"{pair.type.DefName}: {pair.count}");
+                }
+            }
 
             ImGui.End();
 
@@ -378,7 +413,7 @@ namespace MTD.Scenes
 
             if (entityDefNames == null)
             {
-                var list = EntityDef.GetAll();
+                var list = EntityDef.All;
                 entityDefNames = new string[list.Count];
                 for (int i = 0; i < list.Count; i++)
                 {
@@ -445,7 +480,7 @@ namespace MTD.Scenes
 
             if (doSpawnBullets && Input.LeftMouseButtonDown)
             {
-                var def = ProjectileDef.GetAll().GetRandom();
+                var def = ProjectileDef.All.GetRandom();
                 float angle = Random.AngleRad();
                 Projectile.Spawn(def, Input.WorldMousePos, angle);
             }

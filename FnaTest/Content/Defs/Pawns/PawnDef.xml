@@ -1,5 +1,5 @@
 ﻿
-<PawnDef abstract="true" parent="EntityDef" class="MTD.Entities.PawnDef">
+<PawnDef abstract="true" parent="EntityDef" class="PawnDef">
 
   <Name>Base Pawn</Name>
   <Health>100</Health>

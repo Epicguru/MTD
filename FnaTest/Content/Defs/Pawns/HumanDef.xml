@@ -1,5 +1,5 @@
 ﻿
-<HumanDef parent="PawnDef" abstract="true" class="MTD.Entities.Human.HumanDef">
+<HumanDef parent="PawnDef" abstract="true" class="HumanDef">
 
   <Name>Generic Human</Name>
   <Health>200</Health>

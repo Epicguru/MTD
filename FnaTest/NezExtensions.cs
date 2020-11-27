@@ -2,7 +2,9 @@
 using Microsoft.Xna.Framework;
 using Nez;
 using Nez.Sprites;
+using Nez.Systems;
 using Nez.Textures;
+using Spriter2Nez;
 
 namespace MTD
 {
@@ -78,6 +80,46 @@ namespace MTD
 
             int index = Random.Range(0, collection.Count);
             return collection[index];
+        }
+
+        private static Dictionary<string, SpriterContentLoader> spriterLoaders = new Dictionary<string, SpriterContentLoader>();
+
+        /// <summary>
+        /// Loads a Spriter project, which can be used to create <see cref="NezAnimator"/>s
+        /// and <see cref="AnimationRenderer"/>'s. 
+        /// </summary>
+        /// <param name="content">The content loader to use.</param>
+        /// <param name="path">The path, relative to the Content folder, and not including the file extension (.scml)</param>
+        /// <param name="additionalAtlases">Any additional atlses to use. By default uses only the Main atlas.</param>
+        /// <returns>The Spriter content loader, or null if loading failed.</returns>
+        public static SpriterContentLoader LoadAnimationProject(this NezContentManager content, string path, params SpriteAtlas[] additionalAtlases)
+        {
+            if (path == null)
+                return null;
+
+            if (spriterLoaders.TryGetValue(path, out var found))
+                return found;
+
+            if (content == null)
+                return null;
+
+            System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
+            sw.Start();
+
+            SpriterContentLoader loader = new SpriterContentLoader(content, path);
+            loader.AddAtlas(Main.Atlas);
+            for (int i = additionalAtlases.Length - 1; i >= 0; i--)
+            {
+                var atlas = additionalAtlases[i];
+                loader.AddAtlas(atlas, true);
+            }
+            loader.Fill(NezAnimator.DefaultProviderFactory);
+            sw.Stop();
+
+            spriterLoaders.Add(path, loader);
+            Debug.Trace($"Finished loading spriter project {path}, took {sw.ElapsedMilliseconds} ms");
+
+            return loader;
         }
     }
 }

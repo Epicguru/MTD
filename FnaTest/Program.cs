@@ -23,7 +23,16 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Windows;
+using JXml;
+using Microsoft.Xna.Framework.Audio;
+using MTD.Effects;
+using MTD.Resources;
+using Spriter2Nez;
+using SpriterDotNet;
+using SpriterDotNet.Providers;
 using Debug = Nez.Debug;
 using Point = Microsoft.Xna.Framework.Point;
 using WindowStyle = Nez.UI.WindowStyle;
@@ -73,8 +82,9 @@ namespace MTD
     public class Main : Core
     {
         public const int LAYER_UI = 999;
-        public const int LAYER_TILES = 10;
         public const int LAYER_LIGHT = 998;
+        public const int LAYER_MOTES = 50;
+        public const int LAYER_TILES = 10;
 
         public static bool DebugStandableTiles = false;
 
@@ -220,7 +230,7 @@ namespace MTD
 
         private void LoadGeneralContent(LoadingScene ls)
         {
-            #region Main font, main atlas.
+            #region Main font, atlases...
 
             ls.SetMessage("Loading main fonts...");
             Font32 = Content.LoadBitmapFont("Content/Fonts/General32.fnt");
@@ -229,17 +239,60 @@ namespace MTD
             ls.SetMessage("Loading main atlas...");
             Atlas = Content.LoadSpriteAtlas("Content/MainAtlas.atlas", true);
 
+            ls.SetMessage("Loading ui atlas...");
+            UIAtlas = Content.LoadSpriteAtlas("Content/UI.atlas", true);
+
             #endregion
+
+            #region Animation framework
+
+            // Only needs doing once.
+            var factory = new DefaultProviderFactory<Sprite, SoundEffect>(new Config
+            {
+                MetadataEnabled = false,
+                EventsEnabled = true,
+                PoolingEnabled = true,
+                TagsEnabled = false,
+                VarsEnabled = false,
+                SoundsEnabled = false
+            }, true);
+            NezAnimator.DefaultProviderFactory = factory;
+
+            #endregion
+
             #region Load Defs
+
+            // Custom type names.
+            bool CompilerGen(Type t)
+            {
+                var attr = Attribute.GetCustomAttribute(t, typeof(CompilerGeneratedAttribute));
+                return attr != null;
+            }
+            foreach (var type in Assembly.GetExecutingAssembly().GetTypes())
+            {
+                if (type.IsClass && !CompilerGen(type))
+                { 
+                    TypeResolver.CustomTypeNames.Add(type.Name, type);
+                }
+            }
 
             // Load defs!
             Defs = new DefDatabase();
             Defs.AddCustomResolver(typeof(Sprite), (args) =>
             {
                 string path = args.XmlNode.InnerText;
-                var sprite = Atlas.GetSprite(path);
+                SpriteAtlas atlas = Main.Atlas;
+
+                var customAtlasTag = args.XmlNode.Attributes.GetNamedItem("atlas");
+                if (customAtlasTag != null)
+                {
+                    string name = customAtlasTag.InnerText.ToLowerInvariant();
+                    if(name == "ui")
+                        atlas = Main.UIAtlas;
+                }
+                var sprite = atlas.GetSprite(path);
                 if (sprite == null)
-                    Debug.Error("Failed to find sprite for path '{0}'", path);
+                    Debug.Error("Failed to find sprite for path '{0}' in atlas.", path);
                 return sprite;
             });
 
@@ -258,13 +311,8 @@ namespace MTD
             TileDef.Load();
             EntityDef.Load();
             ProjectileDef.Load();
-
-            #endregion
-
-            #region UI Atlas
-
-            ls.SetMessage("Loading ui atlas...");
-            UIAtlas = Content.LoadSpriteAtlas("Content/UI.atlas", true);
+            MoteDef.Load();
+            ResourceDef.Load();
 
             #endregion
         }
@@ -489,6 +537,16 @@ namespace MTD
             // Create UI.
             SetupMenu();
             UIScaleController.RegisterCanvas(ui);
+
+            // For every spriter project...
+            var loader = Content.LoadAnimationProject("Anim/Motes/Motes");
+
+            // For every renderer. (each renderer needs it's own animator)
+            CreateEntity("Animator").AddComponent(new AnimationRenderer(loader.GetEntity("Pick")));
+            var e = CreateEntity("Animator2");
+
+            e.AddComponent(new AnimationRenderer(loader.GetEntity("Pick")));
+            e.Position = new Vector2(200, 200);
         }
 
         public override void Unload()
@@ -572,8 +630,6 @@ namespace MTD
             newTable.Add(new TextButton("Heya", skin));
             ui.Stage.AddElement(newTable);
         }
-
-        private float[] renderedTileCount = new float[200];
 
         private void DrawSomeUI()
         {

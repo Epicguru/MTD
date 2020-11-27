@@ -1,0 +1,13 @@
+
+<SpriteMoteDef parent="MoteDef" abstract="true" class="SpriteMoteDef">
+
+  <!-- Default color of the sprite mote. Can be changed at runtime. -->
+  <Color>(1, 1, 1, 1)</Color>
+
+  <!-- The local offset for the 'slide'. When a sprite mote spawns, it starts 'sliding' towards this offset.-->
+  <SlideTarget>(0, 0)</SlideTarget>
+
+  <!-- The time, in seconds, that the mote takes to slide. See SlideTarget.-->
+  <SlideTime>0.3</SlideTime>
+
+</SpriteMoteDef>

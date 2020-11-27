@@ -1,5 +1,7 @@
-﻿using Nez;
+﻿using MTD.Resources;
+using Nez;
 using Nez.Sprites;
+using Nez.Textures;
 using Nez.UI;
 
 namespace MTD.Scenes
@@ -18,18 +20,18 @@ namespace MTD.Scenes
             skin.Get<TextButtonStyle>().Font = font;
             skin.Get<WindowStyle>().TitleFont = font;
 
-            CreateResourceView(skin, ui.Stage, atlas);
+            CreateResourceView(skin, ui.Stage);
 
             return ui;
         }
 
-        private static void CreateResourceView(Skin skin, Stage stage, SpriteAtlas atlas)
+        private static void CreateResourceView(Skin skin, Stage stage)
         {
             var table = new Table().SetFillParent(true).Left().Top().PadLeft(10).PadTop(10);
 
-            Label AddResource(string name, string icon, int count)
+            Label AddResource(string name, Sprite icon, int count)
             {
-                var img = new Image(atlas.GetSprite(icon));
+                var img = new Image(icon);
                 table.Add(img).Size(32, 32).SetPadRight(5);
                 var label = new Label($"{name}: {count}", skin);
                 table.Add(label).SetAlign(Align.Left);
@@ -37,11 +39,10 @@ namespace MTD.Scenes
                 return label;
             }
 
-            AddResource("Wood", "Icons/Wood", 12);
-            AddResource("Stone", "Icons/Stone", 12);
-            AddResource("Iron", "Icons/Iron", 12);
-            AddResource("Gold", "Icons/Gold", 12);
-            AddResource("Cobalt", "Icons/Cobalt", 12);
+            foreach (var res in ResourceDef.All)
+            {
+                AddResource(res.Name, res.Icon, 0);
+            }
 
             stage.AddElement(table);
         }

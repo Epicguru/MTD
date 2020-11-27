@@ -1,5 +1,5 @@
 
-<ProjectileDef parent="EntityDef" abstract="true" class="MTD.Components.ProjectileDef">
+<ProjectileDef parent="EntityDef" abstract="true" class="ProjectileDef">
 
   <Name>Projectile</Name>
   <Lifetime>10</Lifetime>

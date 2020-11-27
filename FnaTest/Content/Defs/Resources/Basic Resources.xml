@@ -1,0 +1,29 @@
+﻿
+<Defs>
+
+  <WoodResource parent="ResourceDef">
+    <Name>Wood</Name>
+    <Icon atlas="UI">Icons/Wood</Icon>
+  </WoodResource>
+
+  <StoneResource parent="ResourceDef">
+    <Name>Stone</Name>
+    <Icon atlas="UI">Icons/Stone</Icon>
+  </StoneResource>
+
+  <IronResource parent="ResourceDef">
+    <Name>Iron</Name>
+    <Icon atlas="UI">Icons/Iron</Icon>
+  </IronResource>
+
+  <GoldResource parent="ResourceDef">
+    <Name>Gold</Name>
+    <Icon atlas="UI">Icons/Gold</Icon>
+  </GoldResource>
+
+  <CobaltResource parent="ResourceDef">
+    <Name>Cobalt</Name>
+    <Icon atlas="UI">Icons/Cobalt</Icon>
+  </CobaltResource>
+
+</Defs>

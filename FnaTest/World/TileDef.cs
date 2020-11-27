@@ -9,8 +9,12 @@ namespace MTD.World
 {
     public class TileDef : Def
     {
+        #region Static Methods
+
+        public static IReadOnlyList<TileDef> All { get { return allDefs;} }
         private static readonly Dictionary<string, TileDef> namedDefs = new Dictionary<string, TileDef>();
         private static TileDef[] allDefs;
+
         internal static void Load()
         {
             var db = Main.Defs;
@@ -21,16 +25,15 @@ namespace MTD.World
             }
             allDefs = namedDefs.Values.ToArray();
         }
+
         public static TileDef Get(string defName)
         {
             if (namedDefs.TryGetValue(defName, out var def))
                 return def;
             return null;
         }
-        public static IReadOnlyList<TileDef> GetAll()
-        {
-            return allDefs;
-        }
+
+        #endregion
 
         /// <summary>
         /// The name of the tile.
@@ -67,6 +70,9 @@ namespace MTD.World
         public override void Validate()
         {
             base.Validate();
+
+            if (!DefName.EndsWith("Tile"))
+                ValidateWarn($"TileDef's should have a name that ends with 'Tile'. Suggested name: '{DefName}Tile'");
 
             if (string.IsNullOrEmpty(Name))
             {

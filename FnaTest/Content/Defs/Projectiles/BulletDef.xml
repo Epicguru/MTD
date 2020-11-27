@@ -1,5 +1,5 @@
 
-<BulletDef parent="ProjectileDef" class="MTD.Components.BulletDef">
+<BulletDef parent="ProjectileDef" class="BulletDef">
 
   <Name>Bullet</Name>
   <BaseSpeed>70</BaseSpeed> <!-- 70 tiles per second, quite slow for a bullet but should be overriden -->

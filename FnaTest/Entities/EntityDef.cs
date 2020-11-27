@@ -11,8 +11,12 @@ namespace MTD.Entities
     /// </summary>
     public class EntityDef : Def
     {
+        #region Static Methods
+
+        public static IReadOnlyList<EntityDef> All { get { return allDefs; } }
         private static readonly Dictionary<string, EntityDef> namedDefs = new Dictionary<string, EntityDef>();
         private static EntityDef[] allDefs;
+
         internal static void Load()
         {
             var db = Main.Defs;
@@ -23,16 +27,15 @@ namespace MTD.Entities
             }
             allDefs = namedDefs.Values.ToArray();
         }
+
         public static EntityDef Get(string defName)
         {
             if (namedDefs.TryGetValue(defName, out var def))
                 return def;
             return null;
         }
-        public static IReadOnlyList<EntityDef> GetAll()
-        {
-            return allDefs;
-        }
+
+        #endregion
 
         public string Name;
         public Vector2 Scale;

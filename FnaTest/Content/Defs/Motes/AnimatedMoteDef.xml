@@ -1,0 +1,16 @@
+
+<AnimatedMoteDef parent="MoteDef" abstract="true" class="AnimatedMoteDef">
+
+  <!-- Default local offset of the mote. Can be changed at runtime.-->
+  <LocalOffset>(0, 0)</LocalOffset>
+
+  <!-- If true, the animation speed is unaffected by global time scale.-->
+  <UseUnscaledDeltaTime>false</UseUnscaledDeltaTime>
+
+  <!-- The default animation speed. Can be negative, or zero. Can be changed at runtime.-->
+  <Speed>1.0</Speed>
+
+  <!-- Default color of the animated mote. Can be changed at runtime. -->
+  <Color>(1, 1, 1, 1)</Color>
+
+</AnimatedMoteDef>
