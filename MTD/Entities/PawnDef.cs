@@ -3,7 +3,7 @@ using Nez;
 
 namespace MTD.Entities
 {
-    public class PawnDef : EntityDef
+    public abstract class PawnDef : EntityDef
     {
         public int Health = 100;
         public bool DoHurtEffect = true;
@@ -23,9 +23,6 @@ namespace MTD.Entities
             return e;
         }
 
-        protected virtual Pawn CreatePawn()
-        {
-            return new Pawn(this);
-        }
+        protected abstract Pawn CreatePawn();
     }
 }
