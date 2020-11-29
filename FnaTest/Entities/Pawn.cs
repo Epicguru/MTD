@@ -3,7 +3,7 @@ using Nez;
 
 namespace MTD.Entities
 {
-    public class Pawn : Component, IUpdatable
+    public abstract class Pawn : Component, IUpdatable
     {
         public Health Health { get; internal set; }
         /// <summary>
@@ -23,7 +23,7 @@ namespace MTD.Entities
 
         protected float hurtEffectLerp;
 
-        public Pawn(PawnDef def)
+        protected Pawn(PawnDef def)
         {
             this.Def = def;
         }

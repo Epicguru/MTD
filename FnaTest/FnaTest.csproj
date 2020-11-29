@@ -41,6 +41,10 @@
     <PackageReference Include="OptimizedPriorityQueue" Version="5.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Jobs\Instances\" />
+  </ItemGroup>
+
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
     <Exec Command="&#xD;&#xA;for /r &quot;$(ProjectDir)Content&quot; %25%25f in (*.fx) do $(SolutionDir)fxc.exe /T fx_2_0 /Fo %25%25fb %25%25f&#xD;&#xA;&#xD;&#xA;XCOPY $(ProjectDir)Content\ $(TargetDir)Content\ /S /Y /V" />
   </Target>
