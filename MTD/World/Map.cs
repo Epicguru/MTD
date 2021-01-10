@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System.Collections.Generic;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MTD.Scenes;
 using Nez;
@@ -16,8 +17,16 @@ namespace MTD.World
         public TileLayer[] Layers { get; private set; }
         public readonly int WidthInTiles, HeightInTiles;
         public Point MouseTileCoordinates { get; private set; }
+        public IReadOnlyCollection<Point> DigPoints
+        {
+            get
+            {
+                return toDig;
+            }
+        }
 
         private EffectParameter tileShaderMaskParam, tileShaderMatrixParam;
+        private readonly HashSet<Point> toDig = new HashSet<Point>();
 
         private Collider[] colliders;
 
@@ -32,6 +41,36 @@ namespace MTD.World
 
             colliders = new Collider[width * height];
         }
+
+        #region To Dig
+
+        public void AddToDig(Point point)
+        {
+            if (!IsInBounds(point.X, point.Y))
+                return;
+
+            if (!toDig.Contains(point))
+                toDig.Add(point);
+        }
+
+        public void RemoveFromDig(Point point)
+        {
+            if (toDig.Contains(point))
+                toDig.Remove(point);
+        }
+
+        internal void DrawOverlays(Batcher batcher, Camera camera)
+        {
+            var sprite = Main.Atlas.GetSprite("Tiles/Pending_Dig");
+            Vector2 origin = new Vector2(Tile.SIZE) * 0.5f;
+            foreach (var pos in toDig)
+            {
+                Vector2 drawPos = new Vector2(pos.X * Tile.SIZE, pos.Y * Tile.SIZE);
+                batcher.Draw(sprite, drawPos, Color.White, 0f, origin, 1f, SpriteEffects.None, 0f);
+            }
+        }
+
+        #endregion
 
         /// <summary>
         /// Raises a self-change for every single tile in the world.
@@ -101,6 +140,9 @@ namespace MTD.World
                     created.OnTileChange(x, y, created); // Updated newly placed tile.
                 else
                     SetCollider(null, x, y); // Remove collider, if it existed.
+
+                if (created == null && z == 0)
+                    RemoveFromDig(new Point(x, y));
             }
 
             return created;

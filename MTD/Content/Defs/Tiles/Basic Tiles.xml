@@ -4,17 +4,20 @@
   <StoneTile parent="BaseTile">
     <Name>Stone</Name>
     <Sprite>Tiles/StoneTile</Sprite>
+    <Hitpoints>200</Hitpoints>
   </StoneTile>
 
   <DirtTile parent="BaseTile">
     <Name>Dirt</Name>
     <Sprite>Tiles/DirtTile</Sprite>
+    <Hitpoints>100</Hitpoints>
   </DirtTile>
 
   <LadderTile parent="BaseTile">
     <Name>Ladder</Name>
     <Sprite>Tiles/LadderTile</Sprite>
     <CanClimb>true</CanClimb>
+    <Hitpoints>50</Hitpoints>
   </LadderTile>
 
 </Defs>

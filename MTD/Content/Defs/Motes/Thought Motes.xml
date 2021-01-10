@@ -1,0 +1,32 @@
+
+<Defs>
+
+  <ThoughtMote parent="SpriteMoteDef">
+    <SlideTarget>(0, -42)</SlideTarget>
+    <SlideTime>0.15</SlideTime>
+    <FadeStartTime>1</FadeStartTime>
+    <FadeEndTime>2</FadeEndTime>
+  </ThoughtMote>
+
+
+  <ExclaimMote parent="ThoughtMote">
+    <Sprite>Motes/ThoughtExclaim</Sprite>
+  </ExclaimMote>
+
+  <QuestionMote parent="ThoughtMote">
+    <Sprite>Motes/ThoughtQuestion</Sprite>
+  </QuestionMote>
+
+  <SuspenseMote parent="ThoughtMote">
+    <Sprite>Motes/ThoughtSuspense</Sprite>
+  </SuspenseMote>
+
+  <CrossMote parent="ThoughtMote">
+    <Sprite>Motes/ThoughtCross</Sprite>
+  </CrossMote>
+
+  <TickMote parent="ThoughtMote">
+    <Sprite>Motes/ThoughtTick</Sprite>
+  </TickMote>
+
+</Defs>

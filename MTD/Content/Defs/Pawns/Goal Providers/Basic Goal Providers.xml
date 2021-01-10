@@ -1,0 +1,10 @@
+﻿
+<Defs>
+  <WanderGoal parent="GPDef">
+      <Class>WanderGoalProvider</Class>
+  </WanderGoal>
+
+  <DigGoal parent="GPDef">
+    <Class>DigGoalProvider</Class>
+</DigGoal>
+</Defs>

@@ -67,12 +67,23 @@ namespace MTD.World
         /// </summary>
         public bool CanClimb;
 
+        /// <summary>
+        /// The max hitpoints for this tile.
+        /// </summary>
+        public int Hitpoints;
+
         public override void Validate()
         {
             base.Validate();
 
             if (!DefName.EndsWith("Tile"))
                 ValidateWarn($"TileDef's should have a name that ends with 'Tile'. Suggested name: '{DefName}Tile'");
+
+            if (Sprite == null)
+            {
+                ValidateError("This TileDef is missing it's Sprite.");
+                // TODO replace with placeholder sprite.
+            }
 
             if (string.IsNullOrEmpty(Name))
             {
@@ -89,6 +100,12 @@ namespace MTD.World
             {
                 ValidateError($"Class {Class.FullName} does not inherit from Tile. Will be changed to Tile.");
                 Class = typeof(Tile);
+            }
+
+            if (Hitpoints <= 0)
+            {
+                ValidateError("Hitpoints cannot be zero or less! Setting to 1hp.");
+                Hitpoints = 1;
             }
 
             if (Sprite == null)
@@ -109,7 +126,7 @@ namespace MTD.World
             }
             catch (Exception e)
             {
-                Debug.Error("Exception creating tile instance for def {0}: {1}'s constructor should have 3 parameters: TileDef def, int x, int y", this, Class.Name);
+                Debug.Error($"Exception creating tile instance for def {this}: {Class.Name}'s constructor should have 3 parameters: TileDef def, int x, int y");
                 Debug.Error(e.ToString());
                 return null;
             }

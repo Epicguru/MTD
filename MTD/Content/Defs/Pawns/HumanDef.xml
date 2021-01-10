@@ -1,11 +1,14 @@
 ﻿
-<HumanDef parent="PawnDef" abstract="true" class="HumanDef">
+<HumanDef parent="SentientPawnDef" abstract="true" class="HumanDef">
 
   <Name>Generic Human</Name>
   <Health>200</Health>
-  <MovementSpeed>7</MovementSpeed>
-  <FaceMovementDirection>true</FaceMovementDirection>
   <ColliderSize>(28, 120)</ColliderSize>
   <ColliderOffset>(0, -28)</ColliderOffset>
+
+  <GoalProviders>
+    <li>WanderGoal</li>
+    <li>DigGoal</li>
+  </GoalProviders>
 
 </HumanDef>

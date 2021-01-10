@@ -1,0 +1,8 @@
+﻿
+<SentientPawnDef abstract="true" parent="PawnDef" class="SentientPawnDef">
+
+  <Name>Sentient Pawn</Name>
+  <MovementSpeed>7</MovementSpeed>
+  <FaceMovementDirection>true</FaceMovementDirection>
+  
+</SentientPawnDef>

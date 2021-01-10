@@ -138,7 +138,7 @@ namespace MTD.Scenes
             }
             catch (Exception e)
             {
-                Debug.Error("Exception in loading thread:\n{0}", e);
+                Debug.Error($"Exception in loading thread:\n{e}");
                 Main.PostToMainThread(() =>
                 {
                     LoadError?.Invoke("Exception in loading thread.", e);

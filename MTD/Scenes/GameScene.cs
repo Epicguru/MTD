@@ -82,8 +82,9 @@ namespace MTD.Scenes
             base.ClearColor = Color.CornflowerBlue;
             base.ClearColor.A = 0;
 
-            AddRenderer(new RenderLayerExcludeRenderer(0, Main.LAYER_UI, Main.LAYER_TILES, Main.LAYER_LIGHT){Material=otherMat}); // For world objects.
+            AddRenderer(new RenderLayerExcludeRenderer(0, Main.LAYER_UI, Main.LAYER_TILES, Main.LAYER_LIGHT, Main.LAYER_MOTES){Material=otherMat}); // For world objects.
             AddRenderer(new RenderLayerRenderer(-100, Main.LAYER_TILES){Material=tilesMat}); // Only renders map, using custom shader.
+            AddRenderer(new RenderLayerRenderer(98, Main.LAYER_MOTES)); // Mote layer.
             AddRenderer(LightRenderer = new RenderLayerRenderer(99, Main.LAYER_LIGHT){RenderTargetClearColor = new Color(0, 0, 0, 255)}); // Light layer.
             AddRenderer(new ScreenSpaceRenderer(100, Main.LAYER_UI)); // For UI.
         }
@@ -519,10 +520,25 @@ namespace MTD.Scenes
 
                 if (doWorldSelection)
                 {
-                    var found = Physics.OverlapRectangle(new RectangleF(startDrag, endDrag - startDrag));
-                    if (found != null && !found.Entity.IsNullOrDestroyed())
+                    //var found = Physics.OverlapRectangle(new RectangleF(startDrag, endDrag - startDrag));
+                    //if (found != null && !found.Entity.IsNullOrDestroyed())
+                    //{
+                    //    Core.GetGlobalManager<ImGuiManager>().StartInspectingEntity(found.Entity);
+                    //}
+
+                    Point startPos = Map.Current.WorldToTileCoordinates(startDrag);
+                    Point endPos = Map.Current.WorldToTileCoordinates(endDrag);
+                    for (int x = startPos.X; x <= endPos.X; x++)
                     {
-                        Core.GetGlobalManager<ImGuiManager>().StartInspectingEntity(found.Entity);
+                        for (int y = startPos.Y; y <= endPos.Y; y++)
+                        {
+                            bool add = !Input.IsKeyDown(Keys.LeftShift);
+
+                            if(add)
+                                Map.Current.AddToDig(new Point(x, y));
+                            else
+                                Map.Current.RemoveFromDig(new Point(x, y));
+                        }
                     }
                 }
             }

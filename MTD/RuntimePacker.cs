@@ -96,7 +96,7 @@ namespace MTD
                 string fontPath = Path.Combine(fi.DirectoryName, fontName + ".fnt");
                 if (File.Exists(fontPath))
                 {
-                    Debug.Log("Excluding font texture: {0}{1}", fileName, ".png");
+                    Debug.Log($"Excluding font texture: {fileName}.png");
                     return true;
                 }
                 return false;
@@ -110,7 +110,7 @@ namespace MTD
                 string atlasFilePath = Path.Combine(new FileInfo(file).DirectoryName, fileName + ".atlas");
                 if (File.Exists(atlasFilePath))
                 {
-                    Debug.Log("Excluding sub-atlas texture: {0}{1}", fileName, ".atlas");
+                    Debug.Log($"Excluding sub-atlas texture: {fileName}.atlas");
                     return true;
                 }
 
@@ -140,7 +140,7 @@ namespace MTD
             }
             catch (Exception e)
             {
-                Debug.Error("Exception packing sprites:\n{0}", e);
+                Debug.Error($"Exception packing sprites:\n{e}");
                 return false;
             }
         }

@@ -4,7 +4,9 @@
   <Project>Anim/Motes/Motes</Project>
   <Entity>Pick</Entity>
   <Animation>Swing</Animation>
-  
   <Speed>2.0</Speed>
+  
+  <FadeStartTime>0.1</FadeStartTime>
+  <FadeEndTime>0.2</FadeEndTime>
 
 </AnimPickMote>

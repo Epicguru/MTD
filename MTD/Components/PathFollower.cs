@@ -1,11 +1,10 @@
-﻿using System;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Input;
 using MTD.World;
 using MTD.World.Pathfinding;
 using Nez;
+using System;
 using System.Collections.Generic;
-using Microsoft.Xna.Framework.Input;
-using Nez.Sprites;
 
 namespace MTD.Components
 {
@@ -211,16 +210,8 @@ namespace MTD.Components
             Main.Pathfinder.FindPath(CurrentTilePos, targetPosition, UponPathComplete);
         }
 
-        protected virtual void UponPathComplete(PathResult result, List<Point> path, object userObj)
+        public void SetPath(List<Point> path)
         {
-            IsCalculatingPath = false;
-
-            if (result != PathResult.SUCCESS)
-                return;
-
-            if (path.Count < 2)
-                return; // Why?
-
             // Clear any previous path.
             ResetPath();
 
@@ -246,6 +237,19 @@ namespace MTD.Components
             {
                 IsWalkingPath = true;
             }
+        }
+
+        protected virtual void UponPathComplete(PathResult result, List<Point> path, object userObj)
+        {
+            IsCalculatingPath = false;
+
+            if (result != PathResult.SUCCESS)
+                return;
+
+            if (path.Count < 2)
+                return; // Why?
+
+            SetPath(path);
         }
 
         public void TryStartWander(int radius)

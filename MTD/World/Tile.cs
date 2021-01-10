@@ -115,6 +115,15 @@ namespace MTD.World
 
         public readonly int X, Y;
         public readonly TileDef Def;
+        public int Hitpoints { get; protected set; }
+
+        public int MaxHitpoints
+        {
+            get
+            {
+                return Def.Hitpoints;
+            }
+        }
 
         /// <summary>
         /// The current slope state of this tile.
@@ -135,6 +144,7 @@ namespace MTD.World
             this.Def = def ?? throw new ArgumentNullException(nameof(def));
             this.X = x;
             this.Y = y;
+            this.Hitpoints = MaxHitpoints;
         }
 
         public virtual bool AutoSlopeWith(Tile other)
@@ -249,7 +259,22 @@ namespace MTD.World
         /// <param name="fromLoad">True if the world is still loading. If the world is loading, the entities may not have been spawned and not all tiles will have been loaded yet.</param>
         public virtual void OnPlaced(bool fromLoad)
         {
+            if (Hitpoints > MaxHitpoints)
+                Hitpoints = MaxHitpoints;
+        }
 
+        /// <summary>
+        /// Use to the set the hitpoints of this tile.
+        /// Setting to zero or less will destroy the tile.
+        /// </summary>
+        public virtual void SetHitpoints(int hitpoints)
+        {
+            this.Hitpoints = Math.Clamp(hitpoints, 0, MaxHitpoints);
+            if (hitpoints <= 0)
+            {
+                // Die.
+                Layer.Map.SetTile(X, Y, Layer.Depth, null);
+            }
         }
 
         /// <summary>
@@ -410,6 +435,11 @@ namespace MTD.World
                 throw new Exception($"RemoveCollider() called on non-solid tile.");
 #endif
             Layer.Map.SetCollider(null, X, Y);
+        }
+
+        public override string ToString()
+        {
+            return $"({X}, {Y}, {Layer?.Depth ?? -1}) {Name}, {Hitpoints}/{MaxHitpoints}";
         }
     }
 }

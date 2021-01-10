@@ -1,49 +1,87 @@
-﻿using MTD.Entities;
+﻿using System.Collections.Generic;
+using MTD.Entities;
+using Nez;
 
 namespace MTD.Jobs
 {
     public class JobManager
     {
         public readonly SentientPawn Pawn;
-        public Job CurrentJob { get; private set; }
+        public Goal CurrentGoal { get; private set; }
+
+        private readonly List<GoalProvider> providers = new List<GoalProvider>();
 
         public JobManager(SentientPawn pawn)
         {
-            Pawn = pawn ?? throw new System.ArgumentNullException(nameof(pawn));
+            this.Pawn = pawn;
+        }
+
+        public void AddProvider(GoalProvider gp)
+        {
+            if (gp == null || providers.Contains(gp))
+                return;
+
+            gp.Manager = this;
+            providers.Add(gp);
         }
 
         public void Tick()
         {
-            if (CurrentJob == null)
+            if (CurrentGoal == null)
             {
-                CurrentJob = FindNewJob();
+                CurrentGoal = CreateNextGoal();
+                if (CurrentGoal != null)
+                {
+                    CurrentGoal.Manager = this;
+                    CurrentGoal.Plan();
+                }
+                else
+                    return;
             }
 
-            if (CurrentJob != null)
+            if (CurrentGoal.IsInterrupted)
             {
-                CurrentJob.Manager = this;
-                bool canContinue = CurrentJob.TickInternal(out bool _);
-                if (!canContinue)
-                    CurrentJob = null;
+                Debug.Trace($"Goal '{CurrentGoal}' Finished: Interrupted.");
+                CurrentGoal = null;
             }
+            else if (CurrentGoal.IsFailed())
+            {
+                Debug.Trace($"Goal '{CurrentGoal}' Finished: Failed.");
+                CurrentGoal = null;
+            }
+            else if (CurrentGoal.IsComplete())
+            {
+                Debug.Trace($"Goal '{CurrentGoal}' Finished: Completed!");
+                CurrentGoal = null;
+            }
+
+            CurrentGoal?.Tick();
         }
 
-        public void Interrupt(Job replacementJob)
+        public void InterruptCurrent(Goal newForcedGoal = null)
         {
-            if (CurrentJob == null)
+            if(CurrentGoal != null && !CurrentGoal.IsInterrupted)
+                CurrentGoal.Interrupt();
+
+            if (newForcedGoal != null)
             {
-                CurrentJob = replacementJob;
+                newForcedGoal.Manager = this;
+                newForcedGoal.Plan();
             }
-            else
-            {
-                var toInterrupt = CurrentJob.DeepestStarted;
-                toInterrupt?.SendInterruptUp();
-                CurrentJob = replacementJob;
-            }
+
+            CurrentGoal = newForcedGoal;
         }
 
-        public virtual Job FindNewJob()
+        protected virtual Goal CreateNextGoal()
         {
+            providers.Sort();
+            foreach (var prov in providers)
+            {
+                var created = prov.CreateGoal();
+
+                if (created != null)
+                    return created;
+            }
             return null;
         }
     }

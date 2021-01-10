@@ -83,8 +83,8 @@ namespace MTD
     {
         public const int LAYER_UI = 999;
         public const int LAYER_LIGHT = 998;
-        public const int LAYER_MOTES = 50;
-        public const int LAYER_TILES = 10;
+        public const int LAYER_TILES = 500;
+        public const int LAYER_MOTES = 499;
 
         public static bool DebugStandableTiles = false;
 
@@ -152,7 +152,7 @@ namespace MTD
                 PackMainAtlas(ls);
 
                 sw.Stop();
-                Debug.Log("Took {0} ms to do core asset load", sw.ElapsedMilliseconds);
+                Debug.Log($"Took {sw.ElapsedMilliseconds} ms to do core asset load");
 
             };
             ls.LoadDone = () =>
@@ -178,7 +178,7 @@ namespace MTD
                 LoadGeneralContent(ls);
 
                 sw.Stop();
-                Debug.Log("Took {0} ms to do general asset load", sw.ElapsedMilliseconds);
+                Debug.Log($"Took {sw.ElapsedMilliseconds} ms to do general asset load");
             };
             ls.LoadDone = () =>
             {
@@ -292,7 +292,7 @@ namespace MTD
                 }
                 var sprite = atlas.GetSprite(path);
                 if (sprite == null)
-                    Debug.Error("Failed to find sprite for path '{0}' in atlas.", path);
+                    Debug.Error($"Failed to find sprite for path '{path}' in atlas.");
                 return sprite;
             });
 
@@ -643,20 +643,6 @@ namespace MTD
             ImGui.Text($"RTS: {size.X}x{size.Y}");
             ImGui.Text($"UI: {ui?.Width}x{ui?.Height}");
             ImGui.Text($"World cam bounds: {Camera?.Bounds}");
-            if (ImGui.Button("Go fullscreen"))
-            {
-                if (!Screen.IsFullscreen)
-                {
-                    Debug.Log("Going fullscreen, {0}x{1}", Screen.MonitorWidth, Screen.MonitorHeight);
-                    Screen.IsFullscreen = true;
-                    Screen.SetSize(Screen.MonitorWidth, Screen.MonitorHeight);
-                }
-                else
-                {
-                    Screen.IsFullscreen = false;
-                    Screen.SetSize(Screen.MonitorWidth / 2, Screen.MonitorHeight / 2);
-                }
-            }
             if (ImGui.Button("Screenshot"))
             {
                 base.RequestScreenshot((tex) =>

@@ -1,9 +1,9 @@
 ﻿
 <BaseTile abstract="true" class="TileDef">
 
-  <Sprite>Tiles/MissingTexture</Sprite>
   <Class>Tile</Class>
   <Color>(1, 1, 1, 1)</Color>
   <TickInterval>-1</TickInterval>
+  <Hitpoints>100</Hitpoints>
 
 </BaseTile>

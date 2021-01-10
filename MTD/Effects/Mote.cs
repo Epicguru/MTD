@@ -4,6 +4,7 @@ using Nez;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using MTD.World;
 
 namespace MTD.Effects
 {
@@ -264,12 +265,16 @@ namespace MTD.Effects
 
         public MoteRenderer()
         {
+            base.LayerDepth = 0f;
             base.RenderLayer = Main.LAYER_MOTES;
         }
 
         public override void Render(Batcher batcher, Camera camera)
         {
             Mote.DrawAll(batcher, camera);
+
+            // TODO put this somewhere better!
+            Map.Current.DrawOverlays(batcher, camera);
         }
     }
 }

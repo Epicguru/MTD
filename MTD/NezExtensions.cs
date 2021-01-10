@@ -49,7 +49,7 @@ namespace MTD
                 if (found == null)
                 {
                     if(notFoundCount == 0)
-                        Debug.Error("Failed to find frame {0} (frame num {1}) for animation. Further missing sprites will not be logged.", spriteName, i);
+                        Debug.Error($"Failed to find frame {spriteName} (frame num {i}) for animation. Further missing sprites will not be logged.");
                     notFoundCount++;
                 }
                 else
@@ -60,7 +60,7 @@ namespace MTD
                 }
             }
             if(notFoundCount > 0)
-                Debug.Error("Failed to find a total of {0} frames, out of a total {1}", notFoundCount, frameCount);
+                Debug.Error($"Failed to find a total of {notFoundCount} frames, out of a total {frameCount}");
             return anim;
         }
 
