@@ -61,7 +61,9 @@ namespace MTD.Effects
                 effect = fx ? (effect | SpriteEffects.FlipHorizontally) : (effect & ~SpriteEffects.FlipHorizontally);
                 effect = fy ? (effect | SpriteEffects.FlipVertically) : (effect & ~SpriteEffects.FlipVertically);
             }
-            batcher.Draw(Sprite, Position + offset, Color * (1f - base.FadePercentage), base.Rotation, Sprite.Origin, scale, effect, depth);
+            Color c = Color;
+            c.A = (byte)Mathf.RoundToInt(255f * (1f - base.FadePercentage));
+            batcher.Draw(Sprite, Position + offset, c, base.Rotation, Sprite.Origin, scale, effect, depth);
 
             slideTimer += Time.UnscaledDeltaTime;
             return true;

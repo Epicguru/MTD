@@ -225,7 +225,7 @@ namespace MTD
 
         private void LoadEssentialContent()
         {
-            FontTitle = Content.LoadBitmapFont("Content/Fonts/Title72.fnt");
+            FontTitle = Content.LoadBitmapFont("Content/Fonts/Title72.fnt", true);
         }
 
         private void LoadGeneralContent(LoadingScene ls)
@@ -233,8 +233,8 @@ namespace MTD
             #region Main font, atlases...
 
             ls.SetMessage("Loading main fonts...");
-            Font32 = Content.LoadBitmapFont("Content/Fonts/General32.fnt");
-            Font24 = Content.LoadBitmapFont("Content/Fonts/General24.fnt");
+            Font32 = Content.LoadBitmapFont("Content/Fonts/General32.fnt", true);
+            Font24 = Content.LoadBitmapFont("Content/Fonts/General24.fnt", true);
 
             ls.SetMessage("Loading main atlas...");
             Atlas = Content.LoadSpriteAtlas("Content/MainAtlas.atlas", true);

@@ -17,28 +17,52 @@ namespace MTD.Jobs.Tasks
     /// </summary>
     public class RemoveTileTask : Task
     {
-        public Tile ToRemove { get; }
+        public Tile TargetTile
+        {
+            get
+            {
+                return _tile;
+            }
+            set
+            {
+                if (_tile == value)
+                    return;
 
-        public override string Name { get; }
+                _tile = value;
+                if (_tile == null)
+                {
+                    _name = $"Remove tile <null>";
+                    return;
+                }
+                
+                z = _tile.Layer.Depth;
+                _name = $"Remove tile {_tile}";
+            }
+        }
 
-        private readonly int z;
+        public override string Name => _name;
+
+        private string _name;
+        private Tile _tile;
+        private int z;
         private float hpSum;
         private Mote mote;
 
-        public RemoveTileTask(Tile toRemove)
+        public RemoveTileTask(Tile targetTile)
         {
-            this.ToRemove = toRemove;
-            if (toRemove == null)
-                Fail();
-            else
-                z = toRemove.Layer.Depth;
-
-            Name = $"Remove tile {toRemove}";
+            this.TargetTile = targetTile;
         }
 
         public override void Tick()
         {
-            var t = ToRemove;
+            var t = TargetTile;
+            if (t == null)
+            {
+                Debug.Error("RemoveTileTask started ticking, but target tile is still null. Task will now fail.");
+                Fail();
+                return;
+            }
+
             var atPos = Map.Current.GetTile(t.X, t.Y, z);
 
             if (atPos == null || atPos != t)

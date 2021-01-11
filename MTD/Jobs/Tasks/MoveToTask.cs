@@ -46,7 +46,7 @@ namespace MTD.Jobs.Tasks
             else if (Points == null || Points.Count < 2)
             {
                 Debug.Error($"MoveToTask was created with no end position, but when the task started the Goal '{Goal.GetType().Name}'" +
-                            $"had still not assigned to the Point list.");
+                            $"had still not assigned to the Point list, or supplied a list with less than 2 points.");
                 Fail();
             }
             else
@@ -61,6 +61,13 @@ namespace MTD.Jobs.Tasks
         {
             if (result != PathResult.SUCCESS)
             {
+                if (result == PathResult.START_IS_END)
+                {
+                    // Nice! No need to move.
+                    Complete();
+                    return;
+                }
+
                 // Path not found, task fails.
                 Fail();
                 return;

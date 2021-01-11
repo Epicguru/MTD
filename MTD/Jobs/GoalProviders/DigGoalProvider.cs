@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System.Linq;
+using Microsoft.Xna.Framework;
 using MTD.Jobs.Goals;
 using MTD.World;
 
@@ -22,26 +23,24 @@ namespace MTD.Jobs.GoalProviders
             // Find closest tile.
             Point currentPos = Pawn.CurrentTilePos;
 
-            Point closest = default;
-            float closestDst = float.MaxValue;
             Map map = Map.Current;
             if (map.DigPoints.Count == 0)
                 return null;
 
-            foreach (var point in map.DigPoints)
+            var list = map.DigPoints.ToList();
+            list.Sort((a, b) =>
             {
-                int dx = point.X - currentPos.X;
-                int dy = point.Y - currentPos.Y;
-                float dst = dx * dx + dy * dy;
+                int adx = a.X - currentPos.X;
+                int ady = a.Y - currentPos.Y;
+                int bdx = b.X - currentPos.X;
+                int bdy = b.Y - currentPos.Y;
+                int aDst = adx * adx + ady * ady;
+                int bDst = bdx * bdx + bdy * bdy;
 
-                if (dst < closestDst)
-                {
-                    closestDst = dst;
-                    closest = point;
-                }
-            }
+                return aDst - bDst;
+            });
 
-            return new RemoveTileGoal(closest.X, closest.Y, 0);
+            return new RemoveTileGoal(list);
         }
     }
 }

@@ -31,13 +31,13 @@ namespace MTD.Jobs
         {
             get
             {
-                if (tasks.TryPeek(out var current))
-                    return current;
+                if(tasks.Count > 0)
+                    return tasks[0];
                 return null;
             }
         }
 
-        private Queue<Task> tasks = new Queue<Task>();
+        private readonly List<Task> tasks = new List<Task>(16);
 
         public abstract void Plan();
 
@@ -48,8 +48,9 @@ namespace MTD.Jobs
                 return;
 
             // No tasks? Don't update.
-            if (!tasks.TryPeek(out var current))
+            if (tasks.Count == 0)
                 return;
+            var current = tasks[0];
 
             // Any tasks have failed? Don't update.
             if (IsFailed())
@@ -63,7 +64,9 @@ namespace MTD.Jobs
             // If the current is complete, remove it so that the next task is started.
             // Note that is should not be possible for task to be failed and compete at the same time.
             if (current.IsComplete)
-                tasks.Dequeue();
+            {
+                tasks.RemoveAt(0);
+            }
         }
 
         internal void Interrupt()
@@ -86,8 +89,9 @@ namespace MTD.Jobs
 
             IsInterrupted = true;
 
-            if (tasks.TryPeek(out var current))
+            if (tasks.Count > 0)
             {
+                var current = tasks[0];
                 if (!current.IsComplete && !current.IsFailed)
                     current.UponInterrupt();
             }
@@ -121,9 +125,38 @@ namespace MTD.Jobs
                 return this;
             }
 
-            tasks.Enqueue(task);
+            tasks.Add(task);
 
             task.Goal = this;
+            return this;
+        }
+
+        protected Goal RemoveTask(Task task)
+        {
+            if (task == null)
+            {
+                Debug.Error("Cannot remove null task");
+                return this;
+            }
+
+            if (tasks.Contains(task))
+                tasks.Remove(task);
+            else
+                Debug.Warn($"Tried to remove task '{task}', but that task is not active or pending in this goal ({Name})");
+            return this;
+        }
+
+        protected Goal ReplaceCurrent(Task replacement)
+        {
+            if (replacement == null)
+            {
+                Debug.Error("Called ReplaceCurrent(replacement) with null replacement task.");
+                return this;
+            }
+
+            tasks.RemoveAt(0);
+            tasks.Insert(0, replacement);
+            replacement.Goal = this;
             return this;
         }
 

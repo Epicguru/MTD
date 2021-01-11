@@ -215,6 +215,12 @@ namespace MTD.Components
             // Clear any previous path.
             ResetPath();
 
+            if (path.Count < 2)
+            {
+                Debug.Error($"Cannot set to follow path with less than 2 points.");
+                return;
+            }
+
             // Start a new path.
             LerpToNextTile = 0f;
             currentPath = path;

@@ -81,7 +81,7 @@ namespace MTD.World.Pathfinding
             path = null;
             if (start == end)
             {
-                return PathResult.ERROR_START_IS_END;
+                return PathResult.START_IS_END;
             }
             if (!Map.CanStandAt(end.X, end.Y))
             {

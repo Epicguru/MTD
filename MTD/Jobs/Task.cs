@@ -1,4 +1,5 @@
-﻿using MTD.Entities;
+﻿using System;
+using MTD.Entities;
 
 namespace MTD.Jobs
 {
@@ -35,6 +36,7 @@ namespace MTD.Jobs
                 return Manager?.Pawn;
             }
         }
+        public Action<Task> OnFail;
 
         public abstract void Tick();
 
@@ -51,8 +53,11 @@ namespace MTD.Jobs
 
         protected void Fail()
         {
-            if(!this.IsComplete)
+            if (!this.IsComplete)
+            {
                 this.IsFailed = true;
+                OnFail?.Invoke(this);
+            }
         }
 
         public override string ToString()

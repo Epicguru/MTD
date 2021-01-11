@@ -49,7 +49,7 @@ namespace MTD.Jobs.Tasks
             Point end = targetPos;
             void Find(int x, int y)
             {
-                Main.Pathfinder.FindPath(start, new Point(x, y), UponPathFound);
+                Main.Pathfinder.FindPath(start, new Point(x, y), UponPathFound, new Point(x, y));
             }
 
             Find(end.X - 1, end.Y - 1);
@@ -111,11 +111,18 @@ namespace MTD.Jobs.Tasks
             Complete();
         }
 
-        private void UponPathFound(PathResult result, List<Point> points, object _)
+        private void UponPathFound(PathResult result, List<Point> points, object target)
         {
             pending--;
             if (result != PathResult.SUCCESS)
+            {
+                // START_IS_END means that the pawn is already in the interaction spot. Nice.
+                if (result == PathResult.START_IS_END)
+                {
+                    paths[index++] = new List<Point> {(Point) target};
+                }
                 return;
+            }
 
             paths[index++] = points;
         }

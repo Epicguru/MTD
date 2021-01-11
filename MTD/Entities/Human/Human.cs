@@ -45,7 +45,7 @@ namespace MTD.Entities.Human
             if (Input.IsKeyPressed(Keys.I))
             {
                 var target = Map.Current.WorldToTileCoordinates(Input.WorldMousePos);
-                JobManager.InterruptCurrent(new RemoveTileGoal(target.X, target.Y, 0));
+                JobManager.InterruptCurrent(new RemoveTileGoal(new Point(target.X, target.Y)));
             }
         }
 
